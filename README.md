@@ -11,4 +11,4 @@ The files inside this repository are of two types. Most of them are `.tar.gz` fi
 - [ATACseq_coverage.bw.tar.gz](ATACseq_coverage.bw.tar.gz), which contains the ATAC-seq stage-specific coverage files in `.bigwig`/`bw` format.
 - [ATACseq_peaks.bed.tar.gz](ATACseq_peaks.bed.tar.gz), which contains the ATAC-seq stage-specific peak set and the consensus peak set in `.bed` format.
 - [Chordin_alignments.tar.gz](Chordin_alignments.tar.gz), which contains the multiple sequence alignment (MSA) files in `.fasta`/`.fa` format which were used for the phylogenetic analyses on Chordin. In particular:
--   Chordin_SuppFile1.fa
+  - Chordin_SuppFile1.fa
