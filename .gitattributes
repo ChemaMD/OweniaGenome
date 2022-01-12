@@ -1,1 +1,2 @@
 *.tar.gz filter=lfs diff=lfs merge=lfs -text
+Genome_annotation.tar.gz filter=lfs diff=lfs merge=lfs -text
