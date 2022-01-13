@@ -12,7 +12,7 @@ This repository belongs to Francisco M. Martín-Zamora, Yan Liang (as co-first a
 - Lab website: [martinduranlab.com](https://www.martinduranlab.com)
 
 ## How to download the files
-The files inside this repository are of two types. Most of them are compressed `.tar.gz` files stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) which will need to be decompressed, whereas there are two additional files in `.xlsx` format which were uploaded straight to GitHub. To view them, select the `.tar.gz` or `.xslx` file you are interested in (e.g. [Chordin_alignments.tar.gz](Chordin_alignments.tar.gz)), click on *View Raw*, and the file will be downloaded to your device. 
+The files inside this repository are of two types. Most of them are compressed `.tar.gz` files stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) which will need to be decompressed, whereas there are two additional files in `.xlsx` format which were uploaded straight to GitHub. To view them, select the `.tar.gz` or `.xslx` file you are interested in (e.g. [Chordin_alignments.tar.gz](Chordin_alignments.tar.gz)), click on *View Raw* or *Download*, and the file will be downloaded to your device. 
 
 ## Index of contents
 - [ATACseq_coverage.bw.tar.gz](ATACseq_coverage.bw.tar.gz), which contains the ATAC-seq stage-specific coverage files in `.bigwig`/`bw` format.
