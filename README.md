@@ -31,7 +31,7 @@ The files inside this repository are of two types. Most of them are compressed `
 - [Owenia_annotation_chromosome_TrinoPanther.xlsx](Owenia_annotation_chromosome_TrinoPanther.xlsx), which contains an Excel spreadsheet in `.xslx` format containing the genome functional annotation of the chromosome-level genome annotation, i.e., **Genome_annotation_chromosome_level.gff3**. Likewise [Owenia_annotation_scaffold_TrinoPanther.xlsx](Owenia_annotation_scaffold_TrinoPanther.xlsx) contains the same for the chromosome-level genome annotation, i.e., **Genome_annotation_scaffold_level.gff3**.
 - [Transposable_elements_annotation.tar.gz](Transposable_elements_annotation.tar.gz) contains two different files:
   - **Transposable_elements_SuppFile1.fa** contains the sequence of the annotated transposable elements in `.fasta`/`.fa` format.
-  - **Transposable_elements_SuppFile2.fa** contains the sequence of the scaffold-level annotation of transposable elements in `.gff3` format.
+  - **Transposable_elements_SuppFile2.fa** contains the scaffold-level annotation of transposable elements in `.gff3` format.
 - [WGCNA_files.tar.gz](WGCNA_files.tar.gz), which contains the edges and nodes files corresponding to the gene co-expression network analysis we performed.
   - **WGCNA_SuppFile1_nodes.txt** and **WGCNA_SuppFile2_edges.txt** contain the nodes and edges, respectively, of the whole network.
   - **WGCNA_SuppFile3_30%\_nodes.txt** and **WGCNA_SuppFile4_30%\_edges.txt** contain the nodes and edges, respectively, of the random 30% subset we used for visualisation purposes.
