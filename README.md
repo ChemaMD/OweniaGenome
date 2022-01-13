@@ -6,7 +6,7 @@ This repository belongs to Francisco M. Martín-Zamora, Yan Liang (as co-first a
 
 ## Author contact
 - [José María Martín-Durán](mailto:chema.martin@qmul.ac.uk) (senior co-author)
-- [Ferdinand Marlétaz](f.marletaz@ucl.ac.uk) (senior co-author)
+- [Ferdinand Marlétaz](mailto:f.marletaz@ucl.ac.uk) (senior co-author)
 - [Francisco M. Martín-Zamora](mailto:f.m.martinzamora@qmul.ac.uk) (co-first author)
 - [Yan Liang](mailto:y.liang@qmul.ac.uk) (co-first author)
 - Lab website: [martinduranlab.com](https://www.martinduranlab.com)
