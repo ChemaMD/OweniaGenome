@@ -2,7 +2,7 @@
 This GitHub repository contains the supplementary files of the publication: XXXXX.
 
 ## How to use and cite these files
-This repository belongs to Francisco M. Martín-Zamora, Yan Liang (as co-first authors of the associated publication), José María Martín-Durán (as senior co-author), and all other authors of the publication. All files are made publicly available and can be used for further research and other applications. However, if you use these resources in your work, we only ask you to cite our original publication: XXXXX.
+This repository belongs to Francisco M. Martín-Zamora, Yan Liang (as co-first authors of the associated publication), José María Martín-Durán (as senior co-author), and all other authors of the publication. All files are made publicly available and can be used for further research and other applications. However, if you use these resources in your work, we kindly ask you to cite our original publication: XXXXX.
 
 ## Author contact
 - [José María Martín-Durán](mailto:chema.martin@qmul.ac.uk) (senior co-author)
