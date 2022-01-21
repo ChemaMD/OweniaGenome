@@ -3,9 +3,12 @@ This GitHub repository contains the supplementary files of the publication: XXXX
 
 ## How to use and cite these files
 This repository belongs to Francisco M. Martín-Zamora, Yan Liang (as co-first authors of the associated publication), José María Martín-Durán (as senior co-author), and all other authors of the publication. All files are made publicly available and can be used for further research and other applications. However, if you use these resources in your work, we kindly ask you to cite our original publication: XXXXX.
+> Annelid functional genomics reveal the origins of bilaterian life cycles
+> Yan Liang*, Francisco M. Martín-Zamora, Kero Guynes, Allan M. Carillo-Baltodano, Yongkai Tan, Giacomo Moggioli, Océane Seaudre, Martin Tran, Kate Mortimer, Andreas Hejnol, Nicholas M. Luscombe, Ferdinand Marlétaz, José M. Martín-Durán.
+> bioRxiv ; doi: 
 
 ## Author contact
-- [José María Martín-Durán](mailto:chema.martin@qmul.ac.uk) (senior co-author)
+- [José M. Martín-Durán](mailto:chema.martin@qmul.ac.uk) (senior co-author)
 - [Ferdinand Marlétaz](mailto:f.marletaz@ucl.ac.uk) (senior co-author)
 - [Francisco M. Martín-Zamora](mailto:f.m.martinzamora@qmul.ac.uk) (co-first author)
 - [Yan Liang](mailto:y.liang@qmul.ac.uk) (co-first author)
