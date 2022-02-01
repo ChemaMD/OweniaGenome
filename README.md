@@ -1,4 +1,4 @@
-# Supplementary Information
+# Annelid functional genomics reveal the origins of bilaterian life cycles - Supplementary Data
 This GitHub repository contains the supplementary files of the publication: XXXXX.
 
 ## How to use and cite these files
@@ -17,7 +17,7 @@ All files are made publicly available and can be used for further research and o
 ## How to download these files
 The files inside this repository are of two types. Most of them are compressed `.tar.gz` files stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) which will need to be decompressed, whereas there are two additional files in `.xlsx` format which were uploaded straight to GitHub. To view them, select the `.tar.gz` or `.xslx` file you are interested in (e.g. [Chordin_alignments.tar.gz](Chordin_alignments.tar.gz)), click on *Download* and the file will be downloaded to your device.
 
-> :warning: **Some files are very heavy and download might take time to begin**: Be patient, they are correctly stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) and your download will eventually start.
+> :warning: **Some files are very heavy and download might take time to begin** :warning:: Be patient, they are correctly stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) and your download will eventually start.
 
 ## Index of contents
 - [ATACseq_coverage.bw.tar.gz](ATACseq_coverage.bw.tar.gz), which contains the ATAC-seq stage-specific coverage files in `.bigwig`/`bw` format.
