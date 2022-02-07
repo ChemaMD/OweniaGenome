@@ -4,8 +4,8 @@ This GitHub repository contains the supplementary data to the publication cited 
 ## How to use and cite these files
 All files are made publicly available and can be used for further research and other applications. However, if you use these resources in your work, we kindly ask you to cite our original publication.
 > **Annelid functional genomics reveal the origins of bilaterian life cycles.**
-> Yan Liang, Francisco M. Martín-Zamora, Kero Guynes, Allan M. Carillo-Baltodano, Yongkai Tan, Giacomo Moggioli, Océane Seaudre, Martin Tran, Kate Mortimer, Andreas Hejnol, Nicholas M. Luscombe, Ferdinand Marlétaz, José M. Martín-Durán.
-> _bioRxiv_ ; doi: .
+> Yan Liang, Francisco M Martin-Zamora, Kero Guynes, Allan Carrillo-Baltodano, Yongkai Tan, Giacomo Moggioli, Oceane Seudre, Martin Tran, Kate Mortimer, Nicholas Luscombe, Andreas Hejnol, Ferdinand Marletaz, Jose M Martin-Duran.
+> bioRxiv 2022.02.05.479245; doi: https://doi.org/10.1101/2022.02.05.479245
 
 ## Author contact
 - [José M. Martín-Durán](mailto:chema.martin@qmul.ac.uk) (senior co-author)
@@ -17,7 +17,7 @@ All files are made publicly available and can be used for further research and o
 ## How to download these files
 The files inside this repository are of two types. Most of them are compressed `.tar.gz` files stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) which will need to be decompressed, whereas there are two additional files in `.xlsx` format which were uploaded straight to GitHub. To view them, select the `.tar.gz` or `.xslx` file you are interested in (e.g. [Chordin_alignments.tar.gz](Chordin_alignments.tar.gz)), click on *Download* and the file will be downloaded to your device.
 
-> :warning: **Some files are very heavy and download might take time to begin** :warning:: Be patient, they are correctly stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) and your download will eventually start.
+> :warning: **Some files are very heavy and download might take time to begin:** :warning: Be patient, they are correctly stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) and your download will eventually start.
 
 ## Index of contents
 - [ATACseq_coverage.bw.tar.gz](ATACseq_coverage.bw.tar.gz), which contains the ATAC-seq stage-specific coverage files in `.bigwig`/`bw` format.
