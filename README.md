@@ -34,6 +34,9 @@ The files inside this repository are of two types. Most of them are compressed `
   - **Genome_annotation_chromosome_level.gff3**, which is the annotation corresponding to **Genome_chromosome_level_unmasked.fa**.
 - [Hox_alignments.tar.gz](Hox_alignments.tar.gz), which contains the multiple sequence alignment (MSA) files in `.fasta`/`.fa` format which were used for the phylogenetic analysis on Hox genes. The only difference between **Hox_SuppFile2.fa** with **Hox_SuppFile1.fa** is that the latter contains gaps as hyphens(`-`), whereas the former denotes them as blank spaces (` `).
 - [Owenia_annotation_chromosome_TrinoPanther.xlsx](Owenia_annotation_chromosome_TrinoPanther.xlsx), which contains an Excel spreadsheet in `.xslx` format containing the genome functional annotation of the chromosome-level genome annotation, i.e., **Genome_annotation_chromosome_level.gff3**. Likewise [Owenia_annotation_scaffold_TrinoPanther.xlsx](Owenia_annotation_scaffold_TrinoPanther.xlsx) contains the same for the chromosome-level genome annotation, i.e., **Genome_annotation_scaffold_level.gff3**.
+- [Supplementary_tables.tar.gz](Supplementary_tables.tar.gz) contains two different files:
+  - **01-Supplementary_Tables_1-33.xlsx** contains Supplementary Tables 1-33, as indexed in the Supplementary Material of the publication.
+  - **02-Supplementary_Tables_34-45.xlsx** contains Supplementary Tables 34-45, as indexed in the Supplementary Material of the publication.
 - [Transposable_elements_annotation.tar.gz](Transposable_elements_annotation.tar.gz) contains two different files:
   - **Transposable_elements_SuppFile1.fa** contains the sequence of the annotated transposable elements in `.fasta`/`.fa` format.
   - **Transposable_elements_SuppFile2.fa** contains the scaffold-level annotation of transposable elements in `.gff3` format.
