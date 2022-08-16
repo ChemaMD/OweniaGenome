@@ -44,7 +44,7 @@ The files inside this repository are all compressed `.tar.gz` files stored in [G
   - **Chordin_daughter_alignment_2.fa** is the "daughter" MSA #2, which contains all sequences from **Chordin_mother_alignment.fa** and all candidate annelid sequences that have a 10-residue or longer properly aligned fragment in any of the vWFC domain regions of the MSA.
 - [06-Hox_orthology_assignment.tar.gz](06-Hox_orthology_assignment.tar.gz) contains the multiple sequence alignment (MSA) files in `.fasta`/`.fa` format used for the phylogenetic inference on *Hox* sequences. 
   - **Hox_alignment1.fa** contains the alignment with gaps as hyphens(`-`).
-  - **Hox_alignment2.fa** contains the alignment with gaps as hyphens(` `).
+  - **Hox_alignment2.fa** contains the alignment with gaps as blank spaces (` `).
 - [07-Annelid_RNAseq.tar.gz](07-Annelid_RNAseq.tar.gz) contains the gene expression matrices in transcripts-per-million (TPM) and after DESeq2 normalisation of the developmental RNA-seq time courses of *O. fusiformis*, *C. teleta*, and *D. gyrociliatus* containing all transcripts (i.e., all isoforms per gene model), both split by biological replicates and averaged by developmental stage. For each species:
   - **<Species_name>_all_transcripts_TPM_replicates.txt** is the gene expression matrix of all transcripts in TPM split by replicates.
   - **<Species_name>_all_transcripts_TPM_average.txt** is the gene expression matrix of all transcripts in TPM averaged by developmental stage.
