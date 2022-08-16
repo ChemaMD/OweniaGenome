@@ -4,7 +4,7 @@ This GitHub repository contains the supplementary data to the publication cited 
 ## How to use and cite these files
 All files are made publicly available and can be used for further research and other applications. However, if you use these resources in your work, we kindly ask you to cite our original publication.
 > **Annelid functional genomics reveal the origins of bilaterian life cycles.**
-> Yan Liang§, Francisco M. Martín-Zamora§, Kero Guynes, Allan M. Carrillo-Baltodano, Billie E. Davies, Rory D. Donellan, Yongkai Tan, Giacomo Moggioli, Océane Seudre, Martin Tran, Kate Mortimer, Nicholas M. Luscombe, Andreas Hejnol, Ferdinand Marlétaz, José M. Martín-Duran.
+> Francisco M. Martín-Zamora§, Yan Liang§, Kero Guynes, Allan M. Carrillo-Baltodano, Billie E. Davies, Rory D. Donellan, Yongkai Tan, Giacomo Moggioli, Océane Seudre, Martin Tran, Kate Mortimer, Nicholas M. Luscombe, Andreas Hejnol, Ferdinand Marlétaz, José M. Martín-Duran.
 > bioRxiv 2022.02.05.479245; doi: https://doi.org/10.1101/2022.02.05.479245
 
 ## Author contact
