@@ -30,10 +30,8 @@ The files inside this repository are all compressed `.tar.gz` files stored in [G
   - **Owenia_fusiformis_genome_annotation_chromosome_assembly.gff3** contains the gene models of *O. fusiformis* corresponding to **Chromosome_level_assembly_unmasked.fa**.
   - **Owenia_fusiformis_functional_annotation_scaffold_assembly.xlsx** is the functional annotation report of *O. fusiformis* corresponding to **Owenia_fusiformis_genome_annotation_scaffold_assembly.gff3**.
   - **Owenia_fusiformis_functional_annotation_chromosome_assembly.xlsx** is the functional annotation report of *O. fusiformis* corresponding to **Owenia_fusiformis_genome_annotation_chromosome_assembly.gff3**.
-- [03-Transposable_elements.tar.gz](03-Transposable_elements.tar.gz) contains the repetitive and transposable elements repertoires of both *O. fusiformis* and *C. teleta* in `.fasta`/`.fa` and `.gff3` formats, which were used to mask the unmasked genome files.
-  - **Capitella_teleta_transposable_elements.fa** contains the sequences of the repetitive and transposable elements of *C. teleta*.
+- [03-Transposable_elements.tar.gz](03-Transposable_elements.tar.gz) contains the repetitive and transposable elements repertoires of  *O. fusiformis* in `.fasta`/`.fa` and `.gff3` formats, which were used to mask the unmasked genome files.
   - **Owenia_fusiformis_transposable_elements.fa** contains the sequences of the repetitive and transposable elements of *O. fusiformis*.
-  - **Capitella_teleta_transposable_elements.gff3** contains the repetitive and transposable elements models of *C. teleta*.
   - **Owenia_fusiformis_transposable_elements.gff3**, contains the repetitive and transposable elements models of *O. fusiformis*, corresponding to  **Scaffold_level_assembly_unmasked.fa**.
 - [04-Orthogroups.tar.gz](04-Orthogroups.tar.gz) contains the classification by orthogroups of the non-redundant genome-based gene models of the analysed metazoan lineages in `.tsv` format, from which single copy orthologs can be parsed. There are two different files, which were used for different analyses of the publication:
   - **Orthogroups_analysis1.tsv** contains the orthogroup classification of 22 metazoan lineages. This analysis corresponds to the gene family evolution analysis used for the results reported in Fig. 1 and Extended Data Fig. 1. 
