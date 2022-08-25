@@ -1,8 +1,8 @@
 # Annelid functional genomics reveal the origins of bilaterian life cycles - Supplementary Data
-This GitHub repository contains the supplementary data to the publication cited below.
+This GitHub repository contains the supplementary data and the custom code used in the publication cited below.
 
-## How to use and cite these files
-All files are made publicly available and can be used for further research and other applications. However, if you use these resources in your work, we kindly ask you to cite our original publication.
+## How to use and cite these files and code
+All files and code are made publicly available and can be used for further research and other applications. However, if you use these resources in your work, we kindly ask you to cite our original publication.
 > **Annelid functional genomics reveal the origins of bilaterian life cycles.**
 > Francisco M. Martín-Zamora§, Yan Liang§, Kero Guynes, Allan M. Carrillo-Baltodano, Billie E. Davies, Rory D. Donellan, Yongkai Tan, Giacomo Moggioli, Océane Seudre, Martin Tran, Kate Mortimer, Nicholas M. Luscombe, Andreas Hejnol, Ferdinand Marlétaz, José M. Martín-Duran.
 > bioRxiv 2022.02.05.479245; doi: https://doi.org/10.1101/2022.02.05.479245
@@ -14,10 +14,13 @@ All files are made publicly available and can be used for further research and o
 - [Yan Liang](mailto:y.liang@qmul.ac.uk) (co-first author)
 - Lab website: [martinduranlab.com](https://www.martinduranlab.com)
 
-## How to download these files
+## How to download data files
 The files inside this repository are all compressed `.tar.gz` files stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) which will need to be decompressed. To view them, select the `.tar.gz` file you are interested in (e.g. [05-Chordin_orthology_assignment.tar.gz](05-Chordin_orthology_assignment.tar.gz)), click on *Download* and the file will be downloaded to your device.
 
 > :warning: **Some files are very heavy and download might take time to begin:** :warning: Be patient, they are correctly stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) and your download will eventually start.
+
+## How to download code files
+The code in this repository is all stored in the [00-Code](00-Code) folder, and can be downloaded as described above. Most scripts were built in R or Python and are therefore in `.R`, `.py` or `.ipynb` format, which can be visualised in your IDE of choice (e.g., RStudio, Visual Studio Code, etc.). Some of them, specially those that combine multiple steps across different programming languages or softwares called in the command line terminal were put together in `.txt` or `.docx` files. We believe that the script file names and the comments in the scripts make them self-explanatory, but please do not hesitate to reach out if you have any doubts or questions, or if you find any mistake across the thousands of lines of code.
 
 ## Index of contents
 - [01-Owenia_fusiformis_genome_assemblies.tar.gz](01-Owenia_fusiformis_genome_assemblies.tar.gz) contains the unmasked genome files in `.fasta`/`.fa` format of the two genome assemblies versions we report in the publication:
