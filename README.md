@@ -20,7 +20,9 @@ The files inside this repository are all compressed `.tar.gz` files stored in [G
 > :warning: **Some files are very heavy and download might take time to begin:** :warning: Be patient, they are correctly stored in [GitHub Large File Storage (LFS)](https://git-lfs.github.com/) and your download will eventually start.
 
 ## How to download code files
-The code in this repository is all stored in the [00-Code](00-Code) folder, and can be downloaded as described above. Most scripts were built in R or Python and are therefore in `.R`, `.py` or `.ipynb` format, which can be visualised in your IDE of choice (e.g., RStudio, Visual Studio Code, etc.). Some of them, specially those that combine multiple steps across different programming languages or softwares called in the command line terminal were put together in `.txt` or `.docx` files. We believe that the script file names and the comments in the scripts make them self-explanatory, but please do not hesitate to reach out if you have any doubts or questions, or if you find any mistake across the thousands of lines of code.
+The code in this repository is all stored in the [00-Code](00-Code) folder, and can be downloaded as described above. Most scripts were built in R or Python and are therefore in `.R`, `.py` or `.ipynb` format, which can be visualised in your IDE of choice (e.g., RStudio, Visual Studio Code, etc.). Some of them, specially those that combine multiple steps across different programming languages or softwares called in the command line terminal, were put together in `.txt` or `.docx` files, from which the different code chunks can be copied.
+
+> We believe that the script file names and the comments in the scripts make them self-explanatory, but please do not hesitate to reach out if you have any doubts or questions, or if you find any mistake across the thousands of lines of code.
 
 ## Index of contents
 - [01-Owenia_fusiformis_genome_assemblies.tar.gz](01-Owenia_fusiformis_genome_assemblies.tar.gz) contains the unmasked genome files in `.fasta`/`.fa` format of the two genome assemblies versions we report in the publication:
