@@ -1,0 +1,255 @@
+# ATAC Peaks calling, chromatin dynamics profiling and some of related analyses.
+#Use. C.teleta as the  example, same as in the O.fusiformis.
+
+
+## 1. Peaks calling with Macs2
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load anaconda3
+    conda activate biotools
+    
+    samtools sort -n -@ 2 -o Ctel_shift_new_ngm_clean_NameSorted_${SGE_TASK_ID}.bam Ctel_shift_new_ngm_clean_Chrsorted_${SGE_TASK_ID}.bam &&
+    
+    macs2 callpeak -t Ctel_shift_new_ngm_clean_NameSorted_${SGE_TASK_ID}.bam -f BAMPE -g 3.3e08 -n Ctel_shift_new_ngm_${SGE_TASK_ID} -B -q 0.01 --min-length 100 --max-gap 75 --outdir Ctel_shift_new_ngm_${SGE_TASK_ID}_dir
+
+
+## 2. Filter peaks falled into the repetitive regions by the peaks summit filtering
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load bedtools 
+    
+    bedtools intersect -wa -v -a /data/scratch/btx541/00-ATAC/10-Ctel_ATAC/Ctel_shift_new_ngm_${SGE_TASK_ID}_dir/Ctel_shift_new_ngm_${SGE_TASK_ID}_summits.bed -b /data/home/btx541/btx541/00-ATAC/02-Ctel_info/Capitella_teleta.Capitella_teleta_v1.0.dna.toplevel.fasta.out.gff > Ctel_ATAC_${SGE_TASK_ID}_norepeats.bed &&
+    
+    bedtools intersect -wa -a /data/scratch/btx541/00-ATAC/10-Ctel_ATAC/Ctel_shift_new_ngm_${SGE_TASK_ID}_dir/Ctel_shift_new_ngm_${SGE_TASK_ID}_peaks.narrowPeak -b Ctel_ATAC_${SGE_TASK_ID}_norepeats.bed > final_Ctel_ATAC_shift_${SGE_TASK_ID}_norepeats.narrowPeak 
+
+
+
+## 3. Computer enrichment of the reads around transcriptional start sites
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load anaconda3
+    conda activate biotools
+    
+    samtools sort -@ 2 -o Ctel_shift_new_ngm_clean_Chrosorted_${SGE_TASK_ID}.bam Ctel_shift_new_ngm_clean_Chrsorted_${SGE_TASK_ID}.bam
+    samtools index -@ 2 Ctel_shift_new_ngm_clean_Chrosorted_${SGE_TASK_ID}.bam &&
+    
+    bamCoverage -b Ctel_shift_new_ngm_clean_Chrosorted_${SGE_TASK_ID}.bam -o Ctel_shift_new_ngm_clean_Chrosorted_${SGE_TASK_ID}.bw -of bigwig --binSize 10 --extendReads &&
+    
+    computeMatrix reference-point  --referencePoint TSS -S Ctel_shift_new_ngm_clean_Chrosorted_${SGE_TASK_ID}.bw -R tss.gene.bed -a 2000 -b 2000 --skipZeros -o Ctel_shift_new_ngm_clean_Chrosorted_tss_2k_missing_${SGE_TASK_ID}.gz -p 10 --missingDataAsZero 
+    
+    
+
+
+## 4. TSS plots(line plot and heatmap) (Use 64Cell/blastula of C. teleta as an example)
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    
+    module load anaconda3
+    conda activate biotools
+    
+    plotHeatmap \
+     -m Ctel_shift_new_ngm_clean_Chrosorted_tss_2k_missing_1.gz \
+     -out Ctel_shift_new_ngm_clean_Chrosorted_tss_2k_missing_1.pdf \
+     --colorList "white,#563b45" \
+    --heatmapHeight 15 \
+    --heatmapWidth 3 \
+    --zMin 0 \
+    --zMax 150 \
+    --boxAroundHeatmaps no 
+
+
+
+## 5. Identify reproducible IDR peaks in two replicates
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    
+    module load anaconda3
+    conda activate biotools
+    
+    
+    idr --samples final_Ctel_ATAC_shift_1_norepeats.narrowPeak final_Ctel_ATAC_shift_2_norepeats.narrowPeak --input-file-type narrowPeak --output-file Ctel_blastula_IDR_filter.narrowPeak --soft-idr-threshold 0.05 --plot
+    idr --samples final_Ctel_ATAC_shift_3_norepeats.narrowPeak final_Ctel_ATAC_shift_4_norepeats.narrowPeak --input-file-type narrowPeak --output-file Ctel_gastrula_IDR_filter.narrowPeak --soft-idr-threshold 0.05 --plot
+    idr --samples final_Ctel_ATAC_shift_5_norepeats.narrowPeak final_Ctel_ATAC_shift_6_norepeats.narrowPeak --input-file-type narrowPeak --output-file Ctel_st4tt_IDR_filter.narrowPeak --soft-idr-threshold 0.05 --plot
+    idr --samples final_Ctel_ATAC_shift_8_norepeats.narrowPeak final_Ctel_ATAC_shift_9_norepeats.narrowPeak --input-file-type narrowPeak --output-file Ctel_st5_IDR_filter.narrowPeak --soft-idr-threshold 0.05 --plot
+    idr --samples final_Ctel_ATAC_shift_10_norepeats.narrowPeak final_Ctel_ATAC_shift_11_norepeats.narrowPeak --input-file-type narrowPeak --output-file Ctel_st8_IDR_filter.narrowPeak --soft-idr-threshold 0.05 --plot
+
+
+
+## 6. Diffbind to identify consensus peaks and their dynamics
+
+
+    library(ggplot2)
+    library(ggpubr)
+    library(gplots)
+    library(RColorBrewer)
+    library("Mfuzz")
+    library(tidyr)
+    library(dplyr)
+    library("ComplexHeatmap")
+    library(corrplot)
+    library("DiffBind")
+    
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-Capitella_teleta_ATACseq_analyses/03-Bam_files")
+    Ctel_IDR_samples <- dba(sampleSheet="Ctel_ATAC_bam.csv")
+    
+    Ctel_IDR_samples_count <- dba.count(Ctel_IDR_samples,summit=T,filter=0, bRemoveDuplicates=FALSE)
+    
+    cat(capture.output(print(Ctel_IDR_samples_count), file="Ctel_ATAC_diffbind.txt"))
+    
+    dba.show(Ctel_IDR_samples_count)
+    #generate the consensus peaks and their dynamics
+    Ctel_IDR_samples_count_normalized <- dba.normalize(Ctel_IDR_samples_count,normalize=DBA_NORM_RLE,background=FALSE,library=DBA_LIBSIZE_FULL,offsets=TRUE,method=DBA_DESEQ2) 
+    
+    Ctel_IDR_samples_count_normalized_peakset <- dba.peakset(Ctel_IDR_samples_count_normalized,bRetrieve = TRUE)
+    
+    write.table(Ctel_IDR_samples_count_normalized_peakset,"Ctel_new_diffbind_nofilter_peakset.txt",sep = '\t',quote = F)
+    
+
+
+## 7. Principle component analysis of the peak dynamics
+    #Do the PCA for the chromatin dynamics, different to other PCA in our study, we don't filter the peaks with "0" value, basically retained every peaks.  
+    Ctel_all_peaks <- read.table("Ctel_chromatin_dynamics.txt",header = T,row.names=1)
+    m_Ctel_all_peaks<- as.matrix(Ctel_all_peaks)
+    t_m_Ctel_all_peaks<- t(m_Ctel_all_peaks)
+    pca_t_m_Ctel_all_peaks <- prcomp(t_m_Ctel_all_peaks)
+    pca_t_m_Ctel_all_peaks_perc <- round(100*pca_t_m_Ctel_all_peaks$sdev^2/sum(pca_t_m_Ctel_all_peaks$sdev^2),1)
+    df_Ctel_pca_t_m_all_peaks <- data.frame(PC1=pca_t_m_Ctel_all_peaks$x[,1],PC2=pca_t_m_Ctel_all_peaks$x[,2],sample = colnames(Ctel_all_peaks), stage = factor(c("BL","BL","GL","GL","st4tt","st4tt","st5","st5","st8","st8")), replicate = factor(c("1","2","1","2","1","2","1","2","1","2")))
+    df_Ctel_pca_t_m_all_peaks$stage <- factor(df_Ctel_pca_t_m_all_peaks$stage, levels = c("BL", "GL", "st4tt", "st5", "st8"))
+    ggplot(df_Ctel_pca_t_m_all_peaks, aes(PC1,PC2, color = stage, shape=replicate))+geom_point(size=6)+scale_shape_manual(values = c(19,19))+ scale_color_manual(values = c('#563B45','#D2A359','#C6613A','#032C65','#507810'))+labs(x=paste0("PC1 (",pca_t_m_Ctel_all_peaks_perc[1],"% variance",")"), y=paste0("PC2 (",pca_t_m_Ctel_all_peaks_perc[2],"% variance",")"))+theme_bw() + theme(panel.grid = element_blank())+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+     ggsave("Ctel_peaks_PCA.pdf", width = 20, height = 20, units = "cm")
+## 8. Pairwise contrast of peaks between two stages and the peaks occupancy
+    #Use the gastrula and 64 cell/blastula as an example
+    Ctel_GLvsBL <- dba.contrast(Ctel_IDR_samples_count_normalized,
+                            group1=Ctel_IDR_samples_count_normalized$masks$gastrula, 
+                            group2=Ctel_IDR_samples_count_normalized$masks$`64cell`,
+                            name1="gastrula", name2="blastula")
+    Ctel_GLvsBL_analysis <- dba.analyze(Ctel_GLvsBL,bBlacklist=F, bGreylist=F,method=DBA_DESEQ2,bRetrieveAnalysis=FALSE)
+    Ctel_GLvsBL_report <- dba.report(Ctel_GLvsBL_analysis)
+    sum(Ctel_GLvsBL_report$Fold>0)
+    sum(Ctel_GLvsBL_report$Fold<0)
+    
+    #Occupancy of peaks
+    Ctel_IDR_10_samples_overlap <- dba.peakset(Ctel_IDR_samples, consensus=-DBA_REPLICATE)
+    
+    Ctel_IDR_10_samples_overlap_peakset <- dba.peakset(Ctel_IDR_10_samples_overlap,bRetrieve = TRUE)
+    
+    Ctel_IDR_10_samples_overlap_dba <- dba(Ctel_IDR_10_samples_overlap,mask=Ctel_IDR_10_samples_overlap$masks$Consensus,minOverlap=1)
+    Ctel_IDR_10_samples_overlap_dba_peakset <- dba.peakset(Ctel_IDR_10_samples_overlap_dba,bRetrieve = TRUE)
+    write.csv(Ctel_IDR_10_samples_overlap_dba_peakset,"Ctel_all_peaks_occupancy.csv",sep = '\t',quote = F)
+
+
+## 9. UpsetR plot for the peaks
+    library("UpSetR")
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-Capitella_teleta_ATACseq_analyses/03-Bam_files")
+    Ctel_peaks_occupancy <- read.table("Ctel_all_peaks_occupancy.txt",sep="\t",header=TRUE)
+    Ctel_BL_peaks <- Ctel_peaks_occupancy %>% filter(Ctel_peaks_occupancy$X64cell>0)
+    Ctel_BL_peaks_list <- list(Ctel_BL_peaks$Peak_ID)
+    
+    Ctel_GL_peaks <- Ctel_peaks_occupancy %>% filter(Ctel_peaks_occupancy$gastrula>0)
+    Ctel_GL_peaks_list <- list(Ctel_GL_peaks$Peak_ID)
+    
+    Ctel_st4tt_peaks <- Ctel_peaks_occupancy %>% filter(Ctel_peaks_occupancy$elongation>0)
+    Ctel_st4tt_peaks_list <- list(Ctel_st4tt_peaks$Peak_ID)
+    
+    Ctel_st5_peaks <- Ctel_peaks_occupancy %>% filter(Ctel_peaks_occupancy$larvae>0)
+    Ctel_st5_peaks_list <- list(Ctel_st5_peaks$Peak_ID)
+    
+    Ctel_st8_peaks <- Ctel_peaks_occupancy %>% filter(Ctel_peaks_occupancy$competent_larvae>0)
+    Ctel_st8_peaks_list <- list(Ctel_st8_peaks$Peak_ID)
+    
+    list_Ctel_peaks <- list(BL = Ctel_BL_peaks$Peak_ID,GL = Ctel_GL_peaks$Peak_ID,st4tt = Ctel_st4tt_peaks$Peak_ID,st5 = Ctel_st5_peaks$Peak_ID, st8 = Ctel_st8_peaks$Peak_ID)
+    write.csv(fromList(list_Ctel_peaks),"Ctel_peaks_sets_1.csv")
+    
+    Ctel_peaks_sets_1 <- read.csv("Ctel_peaks_sets_1.csv",header=TRUE)
+    
+    upset(Ctel_peaks_sets_1,nsets = 5,sets=c("st8","st5","st4tt","GL","BL"),mb.ratio = c(0.55, 0.45), order.by = "freq",keep.order = T, mainbar.y.label = "number of intersected peaks",sets.x.label = "number of peaks",sets.bar.color = c("#507810","#032C65","#C6613A","#D2A359","#563B45"),queries = list(list(query = intersects,params = list("BL"), color = "#563B45",  active = T), list(query=intersects, params=list("GL"), color="#D2A359", active=T), list(query=intersects, params=list("st4tt"), color="#C6613A", active=T), list(query=intersects, params=list("st5"), color="#032C65", active=T), list(query=intersects, params=list("st8"), color="#507810", active=T),list(query=intersects, params=list("st8","st5","st4tt","GL","BL"), color="#db222a", active=T)))
+## 10. Clustering of peaks and Heatmap of Chromatin dynamics
+
+
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-Capitella_teleta_ATACseq_analyses/04-DiffBind")
+    Ctel_all_peaks <- read.table("Ctel_chromatin_dynamics.txt",header = T,row.names=1)
+    m_Ctel_all_peaks <- as.matrix(Ctel_all_peaks)
+    Ctel_BL_average <- rowMeans(Ctel_all_peaks[,c(1,2)])
+    Ctel_GL_average <- rowMeans(Ctel_all_peaks[,c(3,4)])
+    Ctel_st4tt_average <- rowMeans(Ctel_all_peaks[,c(5,6)])
+    Ctel_st5_average <- rowMeans(Ctel_all_peaks[,c(7,8)])
+    Ctel_st8_average <- rowMeans(Ctel_all_peaks[,c(9,10)])
+    Ctel_all_peaks_average <- data.frame(Ctel_BL_average,Ctel_GL_average,Ctel_st4tt_average,Ctel_st5_average,Ctel_st8_average)
+    row.names(Ctel_all_peaks_average) <- row.names(Ctel_all_peaks)
+    write.table(Ctel_all_peaks_average,"Ctel_all_peaks_average.txt",sep = '\t',quote = F,col.names=NA)
+    
+    u_color = colorRampPalette(rev(brewer.pal(n = 7, name = "RdBu")))(100)
+    Ctel_average_peaks <- read.table("Ctel_all_peaks_average.txt",header = T,row.names=1)
+    m_Ctel_average_peaks <- as.matrix(Ctel_average_peaks)
+    eset_m_Ctel_average_peaks <- new('ExpressionSet', exprs=m_Ctel_average_peaks)
+    filter_eset_m_Ctel_average_peaks <- filter.std(eset_m_Ctel_average_peaks,min.std=0)
+    std_filter_eset_m_Ctel_average_peaks <- standardise(filter_eset_m_Ctel_average_peaks)
+    mestimate(std_filter_eset_m_Ctel_average_peaks)
+    1.983724
+    Ctel_ATAC_mfuzz_nofilter <- mfuzz(std_filter_eset_m_Ctel_average_peaks,c=12,m=1.98)
+    write.table(Ctel_ATAC_mfuzz_nofilter$cluster,"Ctel_ATAC_mfuzz_nofilter.txt",sep = '\t',quote = F,col.names=NA)
+    Ctel_ATAC_mfuzz_nofilter$size  
+    [1] 3793 4071 3844 2831 3551 4974 3013 3450 5484 4462 3218 3328
+    
+    mfuzz.plot2(std_filter_eset_m_Ctel_average_peaks,cl=Ctel_ATAC_mfuzz_nofilter,mfrow=c(4,4),time.labels=c("BL","GL","st4tt","st5","st8"), x11 = FALSE,colo="fancy",centre.col= "blue",Xwidth = 10, Xheight = 10)
+    
+    Ctel_ATAC_nofilter_cluster_colours <- list(cluster = c("7"="#0D0887FF","11"="#3E049CFF","4"="#6300A7FF","1"="#8707A6FF","6"="#A62098FF","5"="#C03A83FF","3"="#D5546EFF","8"="#E76F5AFF","2"="#F58C46FF","9"="#FDAD32FF","10"="#FCD225FF","12"="#F0F921FF"))
+    
+    
+    Ctel_cluster_order_ATAC_nofilter <- read.table("Ctel_ATAC_mfuzz_nofilter.txt",header = 1,row.names=1)
+    Ctel_cluster_order_ATAC_nofilter$cluster = as.character(Ctel_cluster_order_ATAC_nofilter$cluster)
+    Ctel_rowAnn <- HeatmapAnnotation(df = Ctel_cluster_order_ATAC_nofilter,
+                                which = 'row',
+                                col = Ctel_ATAC_nofilter_cluster_colours,
+                                annotation_width = unit(c(1, 4), 'cm'),
+                                show_legend = F)
+    Heatmap(std_filter_eset_m_Ctel_average_peaks@assayData[["exprs"]], 
+            cluster_rows = FALSE, cluster_columns = FALSE, 
+            left_annotation=Ctel_rowAnn, 
+            split=define_clusters_Ctel_ATAC_1,
+            show_row_names = F,
+            col = u_color,show_heatmap_legend = T )
+
+

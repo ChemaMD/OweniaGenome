@@ -1,0 +1,192 @@
+# The Hox gene regulatory network
+To explore the regulatory network of Hox gene, we dissect the regulatory modules as “downstream”and “upstream”.
+
+
+## 1.Downstream regulated genes
+
+To identify the Hox downstream genes, we subset the genes which have bound Hox/EVX/CDX motif, and based on the PANTHER IDs, extract the overlapped ones, then plot the heatmap and the lineplot of the gene expression dynamics
+
+    #Use the Ofus Hox downstream 39 genes expression as the example
+    Ofus_panther_dev_gene_averaged <- read.delim("new_Ofus_panther_dev_gene_matrix.txt",header=T,row.names=1)
+    df_Ofus_panther_dev_gene_averaged <- data.matrix(Ofus_panther_dev_gene_averaged)
+    
+    #option b: 0 to 1 relative expression
+    rescale_custom <- function(x) (x/(max(x)))
+    
+    df_normalised_Ofus_panther_dev_gene_averaged <- t(apply(df_Ofus_panther_dev_gene_averaged, 1, rescale_custom))
+    
+    heatmap_color <- colorRampPalette(rev(brewer.pal(n = 7, name = "RdBu")))(100)
+    
+    Ofus_panther_dev_gene_averaged_x_max <- Heatmap(df_normalised_Ofus_panther_dev_gene_averaged, 
+            cluster_rows = FALSE, cluster_columns = FALSE, 
+            show_row_names = T,
+            col = heatmap_color,show_heatmap_legend = T,row_names_gp = grid::gpar(fontsize = 7),width = ncol(df_normalised_Ofus_panther_dev_gene_averaged)*unit(5, "mm"), height = nrow(df_normalised_Ofus_panther_dev_gene_averaged)*unit(5, "mm"))
+    
+    #lineplots
+    df_normalised_Ofus_panther_dev_gene_averaged_clean <- data.frame(cbind(time,t(df_normalised_Ofus_panther_dev_gene_averaged)))
+    df_normalised_Ofus_panther_dev_gene_averaged_clean_long <- gather(df_normalised_Ofus_panther_dev_gene_averaged_clean, gene_name, expression, -time)
+    
+    df_normalised_Ofus_panther_dev_gene_averaged_clean_long %>%
+      ggplot(aes(x=time, y=expression)) +
+      geom_smooth(method ='loess', size = 1, alpha = 0.5) +
+      stat_smooth(colour = rgb(68,1,84, maxColorValue = 255), fill = rgb(68,1,84, maxColorValue = 255),size = 2, alpha = 0.5)+  
+      theme_bw() +
+      theme(panel.grid = element_blank()) +
+      labs(y = "0 to max", x = "developmental stage") +
+     scale_y_continuous(breaks = c(0,0.5,1), limits = c(0,1)) +
+      scale_x_continuous(breaks = c(1:7), expand = c(0,0), limits = c(0.8,7.2), 
+                         labels = c("blastula", "gastrula", "elongation",
+                                    "early larva", "mitraria larva",
+                                    "competent larva", "juvenile")) +
+      theme(plot.title = element_text(color="black",size=14,hjust=0.5),
+            axis.title.x = element_text(color="black",size=14),
+            axis.title.y = element_text(color="black",size=14),
+            axis.text.x = element_text(color="black",size=12,angle=90,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=0.5, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"))
+    ggsave("Ofus_panther_dev_gene_averaged_lineplot.pdf", width = 20, height = 20, units = "cm")
+    
+    
+
+
+## 2. Upstream of Hox genes
+
+To identify what gene regulate the Hox genes, we subset the peak located in the Hox cluster (except the post1), and extract the TFBS on those peaks.
+
+
+    #Use the O.fusiformis as the example, same as C.teleta
+    
+    #sum and average each TF's TFBS on all the peaks on Hox cluster
+    ofus_files = glob.glob("03-Ofus_FinalFiles/*.txt")
+    print(ofus_files)
+    
+    p = re.compile(r'03-Ofus_FinalFiles/(\S+)_overview.txt_HOXpeaks_bound.txt_score.txt')
+    p
+    
+    concat_108_lst =[]
+    concat_mean_lst =[]
+    
+    
+    ## iterate each ofus_file in list
+    for ofus_file in ofus_files:
+        ## extract sample name from ofus_file
+        try:
+            sample_name = p.findall(ofus_file)[0]
+        except:
+            print (ofus_file)
+            break
+            
+        
+        df = pd.read_csv(ofus_file, sep="\t", header=None, index_col=0)
+        #print (df)
+        out_108 = df.sum(axis=0)
+        out_mean = df.mean(axis=0)
+        
+        ## add row name to each result
+        out_108.name = sample_name
+        out_mean.name = sample_name
+    
+        concat_108_lst.append(out_108)
+        concat_mean_lst.append(out_mean)
+        
+    out_108_df = pd.concat(concat_108_lst, axis=1)
+    out_mean_df = pd.concat(concat_mean_lst, axis=1)
+    
+    
+    out_108_df.T.to_csv("out_Ofus_sum_bound_df.tsv", sep="\t")
+    out_mean_df.T.to_csv("out_Ofus_mean_bound_df.tsv", sep="\t")
+    
+    #Parse the motif information to the TF information
+    
+    Ofus_Hox_upstream_bound_mean <- read.csv("out_Ofus_mean_bound_df.csv",header=T)
+    Annelids_info <- read.csv("Gimme_cluster_motifAnnotation_curation.csv",header=T)
+    u_color = colorRampPalette(rev(brewer.pal(n = 7, name = "RdBu")))(100)
+    Ofus_mean_bound_motif2TF <- inner_join(Ofus_Hox_upstream_bound_mean,Annelids_info,by="Motif")
+    
+    #Mfuzz normalize and clustering the TFBS
+    
+    library(ggplot2)
+    library(RColorBrewer)
+    library("Mfuzz")
+    library(tidyr)
+    library(plyr)
+    library(dplyr)
+    library("ComplexHeatmap")
+    library(scales)
+    
+    m_Ofus_mean_bound_motif2TF<- as.matrix(Ofus_mean_bound_motif2TF[,c(2:6)])
+    rownames(m_Ofus_mean_bound_motif2TF) <- Ofus_mean_bound_motif2TF$Motif.Name
+    eset_m_Ofus_mean_bound_motif2TF <- new('ExpressionSet', exprs=m_Ofus_mean_bound_motif2TF)
+    filter_eset_m_Ofus_mean_bound_motif2TF <- filter.std(eset_m_Ofus_mean_bound_motif2TF,min.std=0)
+    std_filter_eset_m_Ofus_mean_bound_motif2TF <- standardise(filter_eset_m_Ofus_mean_bound_motif2TF)
+    mestimate(std_filter_eset_m_Ofus_mean_bound_motif2TF)
+    [1] 2.894264
+    Dmin(std_filter_eset_m_Ofus_mean_bound_motif2TF,2.89,crange=seq(2,20,2),repeats=3,visu=TRUE)
+     [1] 2.165894328 0.333150788 0.277828243 0.064905137 0.071262708 0.058683870 0.007035554 0.073411367 0.111402365 0.169658078
+    Ofus_bound_mean_motif2TF_mfuzz <- mfuzz(std_filter_eset_m_Ofus_mean_bound_motif2TF,c=8,m=2.89)
+    
+    write.table(Ofus_bound_mean_motif2TF_mfuzz$cluster,"Ofus_bound_mean_motif2TF_mfuzz_origin.txt",col.names=c("Peak_ID"),sep="\t",quote=F)
+    #export the normalized data for the downstream analyses
+    write.table(std_filter_eset_m_Ofus_mean_bound_motif2TF@assayData[["exprs"]],"Ofus_Hox_clusters_bound_mean_motif2TF_z_score.txt",sep = '\t',quote = F)
+    
+    
+    #line plot of all the TFBS 
+    Ofus_bound_mean_z_scores <- read.delim("Ofus_Hox_clusters_bound_mean_motif2TF_z_score.txt",header=T,row.names=1)
+    time <- c(1:5)
+    Ofus_bound_mean_z_scores_clean <- data.frame(cbind(time,t(Ofus_bound_mean_z_scores)))
+    Ofus_bound_mean_z_scores_clean_long <- gather(Ofus_bound_mean_z_scores_clean, motif_name,bound, -time)
+    
+    Ofus_bound_mean_z_scores_clean_long %>%
+      ggplot(aes(x=time, y=bound)) +
+      geom_smooth(method ='loess', size = 1, alpha = 0.5) +
+      stat_smooth(colour = rgb(68,1,84, maxColorValue = 255), fill = rgb(68,1,84, maxColorValue = 255),size = 2, alpha = 0.5)+  
+      theme_bw() +
+      theme(panel.grid = element_blank()) +
+      labs(y = "binding score", x = "developmental stage") +
+     scale_y_continuous(breaks = c(-2,-1,0,1,2), limits = c(-2,2)) +
+      scale_x_continuous(breaks = c(1:5), expand = c(0,0), limits = c(0.8,5.2), 
+                         labels = c("blastula", "gastrula", "elongation",
+                                    "mitraria larva",
+                                    "competent larva")) +
+      theme(plot.title = element_text(color="black",size=14,hjust=0.5),
+            axis.title.x = element_text(color="black",size=14),
+            axis.title.y = element_text(color="black",size=14),
+            axis.text.x = element_text(color="black",size=12,angle=90,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=0.5, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"))
+    ggsave("Ofus_bound_mean_z_scores_lineplot.pdf", width = 20, height = 20, units = "cm")
+    
+    #Combine the heatmap, the number of bound TFs and percentage of bound TFs in the same heatmap
+    Ofus_bound_mean_table <- read.delim("combined_Ofus_bound_mean_z_score_stat_table.txt",header=T,row.names=1)
+    
+    m_Ofus_bound_mean_table <- as.matrix(Ofus_bound_mean_table[,1:5])
+    
+    Ofus_bound_mean_table_percentage <- data.frame(Ofus_bound_mean_table$Percentage)
+    rownames(Ofus_bound_mean_table_percentage) <- rownames(Ofus_bound_mean_table)
+    colnames(Ofus_bound_mean_table_percentage)[1] <- "Percentage"
+    m_Ofus_bound_mean_table_percentage <- as.matrix(Ofus_bound_mean_table_percentage)
+    
+    setwd("/Users/liangyan/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-ATAC_analyses/15-GRN_upstream/00-Binding/00-Ofus/03-FinalFiles/01-DATASETS")
+    Ofus_bound_mean_table_clusters <- read.table("Ofus_bound_mean_motif2TF_mfuzz_origin.txt",header = 1,row.names=1)
+    Ofus_bound_mean_table_clusters$Cluster = as.character(Ofus_bound_mean_table_clusters$Cluster)
+    define_clusters_Ofus_bound_mean <- factor(paste0("Cluster\n", Ofus_bound_mean_table_clusters$Cluster), levels=c("Cluster\n5","Cluster\n4","Cluster\n1","Cluster\n7","Cluster\n2","Cluster\n3","Cluster\n6","Cluster\n8"))
+    
+    
+    Ofus_bound_mean_table_factors_anno <- rowAnnotation(factor = anno_text(Ofus_bound_mean_table$bound_number,gp = gpar(fontsize = 5)))
+    u_color = colorRampPalette(rev(brewer.pal(n = 7, name = "RdBu")))(100)
+    percentage_color = colorRampPalette(brewer.pal(n = 7, name = "Purples"))(100)
+    
+    Ofus_bound_mean_heatmap_1 <- Heatmap(m_Ofus_bound_mean_table, split=define_clusters_Ofus_bound_mean, cluster_row_slices = FALSE,cluster_columns = F,show_row_names = T,cluster_rows = F,col = u_color,row_names_gp = grid::gpar(fontsize = 5),width = ncol(m_Ofus_bound_mean_table)*unit(15, "mm"), height = nrow(m_Ofus_bound_mean_table)*unit(2, "mm"),left_annotation = Ofus_bound_mean_table_factors_anno)+Heatmap(m_Ofus_bound_mean_table_percentage, name = "percentage of bound motif",  height = unit(2, "cm"), width = unit(5, "mm"),col = percentage_color,show_row_names = T,cluster_rows = F,row_names_gp = grid::gpar(fontsize = 5))
+

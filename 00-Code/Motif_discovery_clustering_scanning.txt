@@ -1,0 +1,183 @@
+# Motif identification, clustering and motif scan on peak matrices
+
+## 1. Homer to identify motif
+    
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 2
+    #$ -l h_vmem=30G
+    #$ -l h_rt=30:0:0
+    
+    
+    module load anaconda3
+    conda activate biotools
+    
+    findMotifsGenome.pl Ofus_all_peaks.peak /data/scratch/btx541/00-ATAC/03-Owenia_genome/Owenia_unmasked_v082020.fa Ofus_all_peaks_HOMER/ -size 200 -mask 
+
+
+
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 1
+    #$ -l h_vmem=20G
+    #$ -l h_rt=30:0:0
+    
+    
+    module load anaconda3
+    conda activate biotools
+    
+    findMotifsGenome.pl Ctel_all_peaks.peak /data/scratch/btx541/00-ATAC/02-Ctel_info/Capitella_teleta.Capitella_teleta_v1.0.dna.toplevel.fa Ctel_all_peaks_HOMER/ -size 200 -mask
+
+
+## 2.Merge all the known and denovo of two species, cluster them, and match the clustered motifs.
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 4
+    #$ -l h_vmem=50G
+    #$ -l h_rt=20:0:0
+    
+    
+    module load anaconda3
+    conda activate gimme
+    
+    gimme cluster  -t 0.9 New_combined_Ofus_Ctel_motifs.pwm new_merged_two_output &&
+    
+    gimme match new_merged_two_output/clustered_motifs.pfm -d CIS-BP -o Cluster_match_90.pdf &&
+    gimme match new_merged_two_output/clustered_motifs.pfm -d HOMER.pfm -o Cluster_match_90_HOMER.pdf &&
+    gimme match new_merged_two_output/clustered_motifs.pfm -d gimme.vertebrate.v5.0 -o Cluster_match_90_gimme_5 &&
+    
+    gimme match new_merged_two_output/clustered_motifs.pfm -d JASPAR2022_CORE_customed -o Cluster_match_90_gimme_JASPAR2022_CORE_customed 
+
+
+## 3. Manually curating based on the website 
+
+
+    finally we got Ofus and Ctel motif separately, and based on these data, run the maelstrom.
+
+
+## 4. Log transformation of the peak dynamics
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-ATAC_analyses/00-Ofus/04-DiffBind")
+    Ofus_ATAC_replicates <- read.table("Ofus_IDR_samples_count_normalized_peakset_peakID.txt",header = T)
+    m_Ofus_ATAC_replicates <- as.matrix(Ofus_ATAC_replicates[,c(7:16)])
+    Ofus_ATAC_BL_average <- rowMeans(m_Ofus_ATAC_replicates[,c(1,2)])
+    Ofus_ATAC_GL_average <- rowMeans(m_Ofus_ATAC_replicates[,c(3,4)])
+    Ofus_ATAC_EG_average <- rowMeans(m_Ofus_ATAC_replicates[,c(5,6)])
+    Ofus_ATAC_ML_average <- rowMeans(m_Ofus_ATAC_replicates[,c(7,8)])
+    Ofus_ATAC_CL_average <- rowMeans(m_Ofus_ATAC_replicates[,c(9,10)])
+    Ofus_ATAC_average <- cbind(Ofus_ATAC_BL_average,Ofus_ATAC_GL_average,Ofus_ATAC_EG_average,Ofus_ATAC_ML_average,Ofus_ATAC_CL_average)
+    m_Ofus_ATAC_average <- as.matrix(Ofus_ATAC_average)
+    m_Ofus_ATAC_average_1 <- as.matrix(Ofus_ATAC_average+1)
+    log_m_Ofus_ATAC_average_1 <- log(m_Ofus_ATAC_average_1)
+    Ofus_ATAC_average_add_info <- cbind(Ofus_ATAC_replicates$seqnames,Ofus_ATAC_replicates$start,Ofus_ATAC_replicates$end,Ofus_ATAC_average)
+    rownames(Ofus_ATAC_average_add_info) <-Ofus_ATAC_replicates$PeakID
+    write.table(Ofus_ATAC_average_add_info, "Ofus_ATAC_average_add_info.txt",sep = '\t',quote = F,col.names=NA)
+    log_Ofus_ATAC_average_add_info <- cbind(Ofus_ATAC_replicates$seqnames,Ofus_ATAC_replicates$start,Ofus_ATAC_replicates$end,log_m_Ofus_ATAC_average_1)
+    rownames(log_Ofus_ATAC_average_add_info) <- Ofus_ATAC_replicates$PeakID
+    write.table(log_Ofus_ATAC_average_add_info, "log_Ofus_ATAC_average_add_info.txt",sep = '\t',quote = F,col.names=NA)
+    
+ 
+
+    awk -v OFS="\t" '{print $2":"$3"-"$4, $5, $6,$7,$8,$9}' log_Ofus_ATAC_average_add_info.txt > Ofus_ATAC_average_maelstrom.txt
+    
+    
+    #formating Ctel
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-ATAC_analyses/01-Ctel/04-DiffBind/02-Diffbind_output")
+    setwd("/Users/liangyan/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-ATAC_analyses/01-Ctel/04-DiffBind/02-Diffbind_output")
+    Ctel_ATAC_replicates <- read.table("Ctel_diffbind_nofilter_peakset_peakID.txt",header = T)
+    m_Ctel_ATAC_replicates <- as.matrix(Ctel_ATAC_replicates[,c(7:16)])
+    Ctel_ATAC_64C_average <- rowMeans(m_Ctel_ATAC_replicates[,c(1,2)])
+    Ctel_ATAC_GL_average <- rowMeans(m_Ctel_ATAC_replicates[,c(3,4)])
+    Ctel_ATAC_st4tt_average <- rowMeans(m_Ctel_ATAC_replicates[,c(5,6)])
+    Ctel_ATAC_st5_average <- rowMeans(m_Ctel_ATAC_replicates[,c(7,8)])
+    Ctel_ATAC_st8_average <- rowMeans(m_Ctel_ATAC_replicates[,c(9,10)])
+    Ctel_ATAC_average <- cbind(Ctel_ATAC_64C_average,Ctel_ATAC_GL_average,Ctel_ATAC_st4tt_average,Ctel_ATAC_st5_average,Ctel_ATAC_st8_average)
+    Ctel_ATAC_average_add_info <- cbind(Ctel_ATAC_replicates$seqnames,Ctel_ATAC_replicates$start,Ctel_ATAC_replicates$end,Ctel_ATAC_average)
+    rownames(Ctel_ATAC_average_add_info) <- Ctel_ATAC_replicates$Peak_ID
+    write.table(Ctel_ATAC_average_add_info, "Ctel_ATAC_average_add_info.txt",sep = '\t',quote = F,col.names=NA)
+    
+    
+    m_Ctel_ATAC_average <- as.matrix(Ctel_ATAC_average)
+    m_Ctel_ATAC_average_1 <- as.matrix(Ctel_ATAC_average+1)
+    log_m_Ctel_ATAC_average_1 <- log(m_Ctel_ATAC_average_1)
+    log_Ctel_ATAC_average_add_info <- cbind(Ctel_ATAC_replicates$seqnames,Ctel_ATAC_replicates$start,Ctel_ATAC_replicates$end,log_m_Ctel_ATAC_average_1)
+    rownames(log_Ctel_ATAC_average_add_info) <- Ctel_ATAC_replicates$Peak_ID
+    write.table(log_Ctel_ATAC_average_add_info, "log_Ctel_ATAC_average_add_info.txt",sep = '\t',quote = F,col.names=NA)
+    
+    #save in /Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-ATAC_analyses/01-Ctel/08-Gimme_maelstrom
+    awk -v OFS="\t" '{print $2":"$3"-"$4, $5, $6,$7,$8,$9}' log_Ctel_ATAC_average_add_info.txt > Ctel_ATAC_average_maelstrom.txt
+    sed -e "s/\r//g" Ctel_ATAC_average_maelstrom.txt > new_Ctel_ATAC_average_maelstrom.txt
+
+
+## 5. Running maelstrom to see the motif accessibility (motif activity)
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 4
+    #$ -l h_vmem=50G
+    #$ -l h_rt=50:0:0
+    
+    
+    module load anaconda3
+    conda activate gimme
+    
+    gimme maelstrom /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ofus_ATAC_average_maelstrom.txt -a stuart --no-filter -p /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ofus_96_motifs.pfm /data/scratch/btx541/00-ATAC/03-Owenia_genome/Owenia_unmasked_v082020.fa Ofus_gimme_maelstrom_Ofus_all_peaks_96_motifs_stuart
+
+
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 4
+    #$ -l h_vmem=50G
+    #$ -l h_rt=50:0:0
+    
+    
+    module load anaconda3
+    conda activate gimme
+    
+    gimme maelstrom /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ctel_ATAC_average_maelstrom.txt -a stuart --no-filter -p /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ctel_92_motifs.pfm /data/scratch/btx541/00-ATAC/02-Ctel_info/Capitella_teleta.Capitella_teleta_v1.0.dna.toplevel.fa Ctel_gimme_maelstrom_Ctel_all_peaks_92_motifs_stuart
+
+
+## 6. Extract the fasta sequence of the consensus bed file
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 2
+    #$ -l h_vmem=30G
+    #$ -l h_rt=50:0:0
+    
+    
+    module load anaconda3
+    conda activate biotools
+    
+    bedtools getfasta  -fi /data/scratch/btx541/00-ATAC/03-Owenia_genome/Owenia_unmasked_v082020.fa -bed /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ofus_consensus_peaks.bed -fo New_Ofus_all_peak_fasta.fa
+    
+    bedtools getfasta  -fi /data/scratch/btx541/00-ATAC/02-Ctel_info/Ctel_sorted_remvoed_Genome.fa -bed /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ctel_consensus_peaks.bed -fo New_Ctel_all_peak_fasta.fa
+
+
+
+## 7. Scan motif on peaks
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 2
+    #$ -l h_vmem=30G
+    #$ -l h_rt=50:0:0
+    
+    
+    module load anaconda3
+    conda activate gimme
+     
+    
+    gimme scan New_Ofus_all_peak_fasta.fa -n 1 --gc -c 0.95 -p /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ofus_96_motifs.pfm -g /data/scratch/btx541/00-ATAC/03-Owenia_genome/Owenia_unmasked_v082020.fa -t > Ofus_96_motifs_scan_counts_gc_1.txt
+    gimme scan New_Ctel_all_peak_fasta.fa -n 1 --gc -c 0.95 -p /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ctel_92_motifs.pfm -g /data/scratch/btx541/00-ATAC/02-Ctel_info/Capitella_teleta.Capitella_teleta_v1.0.dna.toplevel.fa -t > Ctel_92_motifs_scan_counts_gc_1.txt
+

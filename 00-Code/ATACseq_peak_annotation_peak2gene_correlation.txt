@@ -1,0 +1,247 @@
+# ATAC peak annotation and peak2gene correlation (Use C.teleta as the example, same analyses in O.fusiformis)
+
+## 1. Use Homer to annotate the peaks (The Use gtf for O.fusiformis and gff3 in C.teleta, both files were generated in this study)
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    
+    module load anaconda3
+    conda activate biotools
+    
+    annotatePeaks.pl Ctel_consensus_peaks_1.bed /data/home/btx541/btx541/00-ATAC/02-Ctel_info/Capitella_teleta.Capitella_teleta_v1.0.dna.toplevel.fa -gff3 /data/home/btx541/btx541/00-ATAC/02-Ctel_info/Capitella_annotation_v050321.gff3  > annotated_Ctel_named_all_peaks_gff3.txt
+
+
+## 2. Use pie chart to visualize the peaks annotation (use the whole peakset as an example)
+    Ctel_all_stat <- read.table("Ctel_all_peaks_stat.txt",as.is=TRUE,header=TRUE)
+    Ctel_all_stat$region <- factor(Ctel_all_stat$region,levels = unique(Ctel_all_stat$region))
+    ggplot(Ctel_all_stat, aes(x="", y=all, fill=region))+geom_bar(width = 1, stat = "identity", position="fill")+coord_polar("y")+scale_fill_manual(values = c("#F94144","#F3722C","#F8961E","#F9C74F","#90BE6D","#43AA8B","#577590"))+theme_classic()
+    
+    ggsave("Ctel_all_peaks_annotation.pdf", width = 10, height = 10, units = "cm")
+
+
+##  3. Barplot for the stage peaks annotation
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-Capitella_teleta_ATACseq_analyses/05-peaks_annotation")
+    Ctel_stages_peaks_location <- read.table("Ctel_stage_peaks_annotation_table.txt",as.is=TRUE,header=TRUE)
+    gather_Ctel_stages_peaks_location<- gather(Ctel_stages_peaks_location, stage, number,-Region)
+    gather_Ctel_stages_peaks_location$stage <- factor(gather_Ctel_stages_peaks_location$stage,levels = unique(gather_Ctel_stages_peaks_location$stage))
+    gather_Ctel_stages_peaks_location$Region <- factor(gather_Ctel_stages_peaks_location$Region,levels = unique(gather_Ctel_stages_peaks_location$Region))
+    ggplot(data=gather_Ctel_stages_peaks_location,aes(x=stage,y=number,fill=Region))+ geom_bar(stat="identity", position="fill")+theme_classic()+scale_fill_manual(values = c("#F94144","#F3722C","#F8961E","#F9C74F","#90BE6D","#43AA8B","#577590"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("Ctel_stage_peaks_annotation_percentage.pdf", width = 10, height = 10, units = "cm")
+    
+    ggplot(data=gather_Ctel_stages_peaks_location,aes(x=stage,y=number,fill=Region))+ geom_bar(stat="identity")+theme_classic()+scale_fill_manual(values = c("#F94144","#F3722C","#F8961E","#F9C74F","#90BE6D","#43AA8B","#577590"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    
+    ggsave("Ctel_stage_peaks_annotation_number.pdf", width = 10, height = 10, units = "cm") 
+
+
+## 4. Assign peak to nearest gene based on the nearest promoter ID and calculate the correlation.
+    peak_expr_annot = peak_annot_df.merge(gene_expr_df, left_on='Nearest PromoterID', right_index=True, validate="m:1",)
+    peak_expr_annot
+    
+    def calculate_corr(row):
+        corr, pval = stats.pearsonr(row.loc[['BL.peak','GL.peak','st4tt.peak','st5.peak','st8.peak']], 
+                                    row.loc[['BL.expr','GL.expr','st4tt.expr','st5.expr','st8.expr']])
+        return corr, pval
+    
+    peak_expr_annot[['corr','corr.pval']] = peak_expr_annot.apply(calculate_corr, axis=1, result_type="expand")
+
+
+## 5. Visualize the correlation values by density plot
+
+
+    library(ggplot2)
+    library(ggpubr)
+    library(gplots)
+    library(RColorBrewer)
+    library(tidyr)
+    library(dplyr)
+    
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-Capitella_teleta_ATACseq_analyses/05-peaks_annotation")
+    corr_46409 <- read.csv("Ctel_detailed_annotation_cor.csv",header=T, na.strings=c("","NA"))
+    
+    
+    df_46409_promoter <- corr_46409 %>% filter(corr_46409$region_group=="promoter-TSS ")
+    df_46409_exon1 <- corr_46409 %>% filter(corr_46409$region_group=="1st exon")
+    df_46409_intron1 <- corr_46409 %>% filter(corr_46409$region_group=="1st intron")
+    df_46409_exon_other <- corr_46409 %>% filter(corr_46409$region_group=="other exon")
+    df_46409_intron_other <- corr_46409 %>% filter(corr_46409$region_group=="other intron")
+    df_46409_TTS <- corr_46409 %>% filter(corr_46409$region_group=="TTS ")
+    df_46409_intergenic <- corr_46409 %>% filter(corr_46409$region_group=="Intergenic")
+    
+    
+    df_46409_promoter_na <- df_46409_promoter %>% filter(!is.na(corr))
+    df_46409_exon1_na <- df_46409_exon1 %>% filter(!is.na(corr))
+    df_46409_intron1_na <- df_46409_intron1 %>% filter(!is.na(corr))
+    df_46409_exon_other_na <- df_46409_exon_other %>% filter(!is.na(corr))
+    df_46409_intron_other_na <- df_46409_intron_other %>% filter(!is.na(corr))
+    df_46409_TTS_na <- df_46409_TTS %>% filter(!is.na(corr))
+    df_46409_intergenic_na <- df_46409_intergenic %>% filter(!is.na(corr))
+    
+    
+    corr_46409_promoter_na <- as.data.frame(df_46409_promoter_na)
+    corr_46409_exon1_na <- as.data.frame(df_46409_exon1_na)
+    corr_46409_intron1_na <- as.data.frame(df_46409_intron1_na)
+    corr_46409_exon_other_na <- as.data.frame(df_46409_exon_other_na)
+    corr_46409_intron_other_na <- as.data.frame(df_46409_intron_other_na)
+    corr_46409_TTS_na <- as.data.frame(df_46409_TTS_na)
+    corr_46409_intergenic_na <- as.data.frame(df_46409_intergenic_na)
+    
+    df_46409_promoter <- corr_46409 %>% filter(corr_46409$region_group=="promoter-TSS ")
+    df_46409_exon1 <- corr_46409 %>% filter(corr_46409$region_group=="1st exon")
+    df_46409_intron1 <- corr_46409 %>% filter(corr_46409$region_group=="1st intron")
+    df_46409_exon_other <- corr_46409 %>% filter(corr_46409$region_group=="other exon")
+    df_46409_intron_other <- corr_46409 %>% filter(corr_46409$region_group=="other intron")
+    df_46409_TTS <- corr_46409 %>% filter(corr_46409$region_group=="TTS ")
+    df_46409_intergenic <- corr_46409 %>% filter(corr_46409$region_group=="Intergenic")
+    
+    
+    df_46409_promoter_na <- df_46409_promoter %>% filter(!is.na(corr))
+    df_46409_exon1_na <- df_46409_exon1 %>% filter(!is.na(corr))
+    df_46409_intron1_na <- df_46409_intron1 %>% filter(!is.na(corr))
+    df_46409_exon_other_na <- df_46409_exon_other %>% filter(!is.na(corr))
+    df_46409_intron_other_na <- df_46409_intron_other %>% filter(!is.na(corr))
+    df_46409_TTS_na <- df_46409_TTS %>% filter(!is.na(corr))
+    df_46409_intergenic_na <- df_46409_intergenic %>% filter(!is.na(corr))
+    
+    
+    corr_46409_promoter_na <- as.data.frame(df_46409_promoter_na)
+    corr_46409_exon1_na <- as.data.frame(df_46409_exon1_na)
+    corr_46409_intron1_na <- as.data.frame(df_46409_intron1_na)
+    corr_46409_exon_other_na <- as.data.frame(df_46409_exon_other_na)
+    corr_46409_intron_other_na <- as.data.frame(df_46409_intron_other_na)
+    corr_46409_TTS_na <- as.data.frame(df_46409_TTS_na)
+    corr_46409_intergenic_na <- as.data.frame(df_46409_intergenic_na)
+    
+      - Promoters: RGB: (249,65,68); HEX: #F94144.
+        - 5’-UTR and first exon: RGB: (243,114,44); HEX: #F3722C.
+        - First intron: RGB: (248,150,30); HEX: #F8961E.
+        - Other exons and 3’-UTR: RGB: (249,199,79); HEX: #F9C74F.
+        - Other introns: RGB: (144,190,109); HEX: #90BE6D.
+        - Transcription end sites: RGB: (67,170,139); HEX: #43AA8B.
+        - Intergenic regions: RGB: (87,117,144); HEX: #577590.
+    
+    promoter_density <- ggplot(data=corr_46409_promoter_na, aes(x=corr, group=region_group , fill=region_group )) +geom_density(adjust=1.5) +theme_bw() + theme(panel.grid = element_blank())+ylim(0,1)+scale_fill_manual(values = c("#F94144"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("new_promoter_density.pdf", width = 10, height = 10, units = "cm")
+    
+    
+    exon1_density <- ggplot(data=corr_46409_exon1_na, aes(x=corr, group=region_group , fill=region_group)) +geom_density(adjust=1.5) +theme_bw() + theme(panel.grid = element_blank())+ylim(0,1)+scale_fill_manual(values = c("#F3722C"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("new_exon1_density.pdf", width = 10, height = 10, units = "cm")
+    
+    other_exon_density <- ggplot(data=corr_46409_exon_other_na, aes(x=corr, group=region_group , fill=region_group)) +geom_density(adjust=1.5) +theme_bw() + theme(panel.grid = element_blank())+ylim(0,1)+scale_fill_manual(values = c("#F9C74F"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("new_other_exon_density.pdf", width = 10, height = 10, units = "cm")
+    
+    intron1_density <- ggplot(data=corr_46409_intron1_na, aes(x=corr, group=region_group , fill=region_group)) +geom_density(adjust=1.5) +theme_bw() + theme(panel.grid = element_blank())+ylim(0,1)+scale_fill_manual(values = c("#F8961E"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("new_intron1_density.pdf", width = 10, height = 10, units = "cm")
+    
+    other_intron_density <- ggplot(data=corr_46409_intron_other_na, aes(x=corr, group=region_group , fill=region_group)) +geom_density(adjust=1.5) +theme_bw() + theme(panel.grid = element_blank())+ylim(0,1)+scale_fill_manual(values = c("#90BE6D"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("new_other_intron_density.pdf", width = 10, height = 10, units = "cm")
+    
+    TTS_density <- ggplot(data=corr_46409_TTS_na, aes(x=corr, group=region_group , fill=region_group)) +geom_density(adjust=1.5) +theme_bw() + theme(panel.grid = element_blank())+ylim(0,1)+scale_fill_manual(values = c("#43AA8B"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("new_TTS_density.pdf", width = 10, height = 10, units = "cm")
+    
+    corr_46409_intergenic_density <- ggplot(data=corr_46409_intergenic_na, aes(x=corr, group=region_group , fill=region_group)) +geom_density(adjust=1.5) +theme_bw() + theme(panel.grid = element_blank())+ylim(0,1)+scale_fill_manual(values = c("#577590"))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("new_intergenic_density.pdf", width = 10, height = 10, units = "cm")
+
+

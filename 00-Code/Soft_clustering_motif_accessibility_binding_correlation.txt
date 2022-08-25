@@ -1,0 +1,152 @@
+# Soft clustering of motif accessibility and TFBS and correlation of 33 common transcriptional factors
+To explore the similarity and the relationship of the transcriptional regulatory modules throughout the development of two species, we subset the shared 33 known transcriptional factors between O. fusiformis and C. teleta. 
+
+
+## 1. The Mfuzz clustering of motif accessibility and transcriptional factor binding score (TFBS)
+
+
+    #Mfuzz (Use the C.teleta motif accessibility as an example)
+    
+    eset_m_Ctel_motif_activity <- new('ExpressionSet', exprs=m_Ctel_motif_activity)
+    filter_eset_m_Ctel_motif_activity <- filter.std(eset_m_Ctel_motif_activity,min.std=0)
+    std_filter_eset_m_Ctel_motif_activity <- standardise(filter_eset_m_Ctel_motif_activity)
+    mestimate(std_filter_eset_m_Ctel_motif_activity)
+    [1] 2.740144
+    
+    Dmin(std_filter_eset_m_Ctel_motif_activity,2.74,crange=seq(2,20,2),repeats=3,visu=TRUE)
+    [1] 2.62811199 0.97173392 0.13588332 0.31554281 0.69071583 0.02594623 0.01422834 0.18627571 0.26274691 0.46054807
+    Ctel_motif_activity_Mfuzz <- mfuzz(std_filter_eset_m_Ctel_motif_activity,c=6,m=2.74)
+    
+    #export the mfuzz normalize z-score for all the downstream analyses
+    write.table(std_filter_eset_m_Ctel_motif_activity@assayData[["exprs"]],"Ctel_motif_activity_Mfuzz_z_score.txt",sep = '\t',quote = F)
+    write.table(Ctel_motif_activity_Mfuzz$cluster,"Ctel_motif_activity_Mfuzz_clusters_origin.txt",col.names=c("Motif"),sep="\t",quote=F)
+    
+    #Plot the heatmap
+    Ctel_Motif_activity_cluster_final_order <- read.table("Ctel_Motif_activity_resorted_Cluster.txt",header = 1,row.names=1) 
+    Ctel_Motif_activity_cluster_final_order$Cluster = as.character(Ctel_Motif_activity_cluster_final_order$Cluster)
+    new_Ctel_motif_activity_z_score <- read.table("Ctel_motif_activity_Mfuzz_z_score.txt",sep="\t", as.is=TRUE,header=TRUE,row.names=1)
+    m_new_Ctel_motif_activity_z_score <- as.matrix(new_Ctel_motif_activity_z_score)
+    
+    new_Ctel_motif_activity_define_clusters <- factor(paste0("Cluster\n", Ctel_Motif_activity_cluster_final_order$Cluster), levels=c("Cluster\n1","Cluster\n2","Cluster\n3","Cluster\n4","Cluster\n5","Cluster\n6"))
+    
+    #row annotation for the TF
+    
+    Ctel_malestrom_motif2TF <- read.delim("Ctel_malestrom_motif2TF.txt",header = 1,row.names=1)
+    Ctel_motifs2actors_anno <- rowAnnotation(factor = anno_text(Ctel_malestrom_motif2TF$Motif_Name,gp = gpar(fontsize = 4)))
+    
+    #heatmap
+    Ctel_motif_activity_heatmap_ann_1 <- Heatmap(m_new_Ctel_motif_activity_z_score, split=new_Ctel_motif_activity_define_clusters, cluster_row_slices = FALSE,cluster_columns = F,show_row_names = T,cluster_rows = F,col = u_color,row_names_gp = grid::gpar(fontsize = 4),width = ncol(m_new_Ctel_motif_activity_z_score)*unit(15, "mm"), height = nrow(m_new_Ctel_motif_activity_z_score)*unit(2, "mm"),left_annotation = Ctel_motifs2actors_anno)
+    
+    
+
+
+
+## 2. Correlation of the common 33 motifs in both Ofus and Ctel
+
+To determine the samples correlation, we performed “self-correlation” and “cross-species” correlation. By using the 1. motif accessibility and 2. TFBS. In total there are 4 different correlation heatmaps.
+
+
+    #Here use the TFBS of Ofus as the example of self-correlation
+    
+    library(ggplot2)
+    library(ggpubr)
+    library(gplots)
+    library(RColorBrewer)
+    library("Mfuzz")
+    library(tidyr)
+    library(dplyr)
+    library("ComplexHeatmap")
+    library(corrplot)
+    library("DiffBind")
+    
+    Ofus_33_renamed_TFBS_2 <- read.delim("Order_Ofus_33_commom_TFBS2TF_renamed.txt",header = TRUE,row.names=1)
+    m_Ofus_33_renamed_TFBS_2 <- as.matrix(Ofus_33_renamed_TFBS_2)
+    
+    #calculate the correlation
+    cc_Ofus_33_renamed_TFBS <- cor(m_Ofus_33_renamed_TFBS_2, method = "pearson")
+    #correlation plot
+    breaksList_TFBS = seq(-1, 1, by = 0.01)
+    pheatmap(cc_Ofus_33_renamed_TFBS, cluster_rows=F, cluster_cols=F, show_rownames=T,fontsize= 12,col=palet3,cellwidth=40,cellheight=40,breaks =breaksList_TFBS)
+    #correlation data export
+    write.table(cc_Ofus_33_renamed_TFBS,"correlation_coefficient_Ofus_33_renamed_TFBS.txt",sep = '\t',quote = F)
+    
+    
+
+
+# Here use the TFBS as the example of cross-species correlation. (same as motif accessibility)
+
+    #import the normalized TFBS of two datasets.To run the correlation,the datasets should be in the same order and normalized
+    Ofus_33_renamed_TFBS_2 <- read.delim("Order_Ofus_33_commom_TFBS2TF_renamed.txt",header = TRUE,row.names=1)
+    m_Ofus_33_renamed_TFBS_2 <- as.matrix(Ofus_33_renamed_TFBS_2)
+    Ctel_33_renamed_TFBS_2 <- read.delim("Order_Ctel_33_commom_TFBS2TF_renamed.txt",header = TRUE,row.names=1)
+    m_Ctel_33_renamed_TFBS_2 <- as.matrix(Ctel_33_renamed_TFBS_2)
+    
+    #Run the correlation of two matrices
+    correlation_Ofus_Ctel_TFBS_matrix <- cor(m_Ofus_33_renamed_TFBS_2,m_Ctel_33_renamed_TFBS_2)
+    #viz the correlation heatmap
+    breaksList_TFBS = seq(-1, 1, by = 0.01)
+    pheatmap(correlation_Ofus_Ctel_TFBS_matrix, cluster_rows=F, cluster_cols=F, show_rownames=T,fontsize= 12,col=palet3,cellwidth=40,cellheight=40,breaks =breaksList_TFBS)
+
+
+##  3. To viz the TFBS of each motif, we use line plot to show all 33 TFs.
+    #Use the Hox motif TFBS as the example. Because they need to be comparable, so we viz the normalized values of all 33 TFs, and the original datasets need to be the same order, both the TFs (row) and the stages(column)
+    library(dplyr)
+    library(ggplot2)
+    library("RColorBrewer")
+    library("pheatmap")
+    library(corrplot)
+    library(philentropy)
+    library(tidyr)
+    library(dplyr)
+    library("preprocessCore")
+    
+    Ofus_33_TFBS_label <- read.delim("Order_Ofus_33_commom_TFBS2TF_renamed_labeled_2.txt",header = TRUE,row.names=1)
+    Ctel_33_TFBS_label <- read.delim("Order_Ctel_33_commom_TFBS2TF_renamed_labeled_2.txt",header = TRUE,row.names=1)
+    
+    #rename the stages in Ctel
+    colnames(Ctel_33_TFBS_label) <- colnames(Ofus_33_TFBS_label)
+    
+    #bind the two datasets by stage
+    rbind_Ofus_Ctel_33_TFBS <- rbind(Ofus_33_TFBS_label,Ctel_33_TFBS_label)
+    
+    #transpose
+    t_rbind_Ofus_Ctel_33_TFBS <- t(rbind_Ofus_Ctel_33_TFBS)
+    
+    df_t_rbind_Ofus_Ctel_33_TFBS <- as.data.frame(t_rbind_Ofus_Ctel_33_TFBS)
+    
+    #export the dataset
+    write.table(df_t_rbind_Ofus_Ctel_33_TFBS,"df_t_rbind_Ofus_Ctel_33_TFBS.txt",sep = '\t',quote = F)
+    
+    #import the combined data
+    Ofus_Ctel_33_TFBS <- read.delim("df_t_rbind_Ofus_Ctel_33_TFBS.txt",header = TRUE)
+    df_Ofus_Ctel_33_TFBS <- as.data.frame(Ofus_Ctel_33_TFBS)
+    
+    df_Annelid_HOX.CDX.EVX <- df_Ofus_Ctel_33_TFBS %>%
+      select(Stage, Ofus_Annelid_HOX.CDX.EVX , Ctel_Annelid_HOX.CDX.EVX ) %>%
+      gather(key = "TF", value = "TFBS", -Stage)
+    df_Annelid_HOX.CDX.EVX  
+    
+    df_Annelid_HOX.CDX.EVX$Stage <- factor(df_Annelid_HOX.CDX.EVX$Stage,levels = unique(df_Annelid_HOX.CDX.EVX $Stage))
+    df_Annelid_HOX.CDX.EVX$TF <- factor(df_Annelid_HOX.CDX.EVX$TF,levels = unique(df_Annelid_HOX.CDX.EVX$TF))
+    two_stages <- c("blastula","gastrula","elongation/st4tt larva","mitraria/st5 larva","competent/st8 larva")
+    ggplot_Annelid_HOX.CDX.EVX <- ggplot(data=df_Annelid_HOX.CDX.EVX, aes(x=Stage, y=TFBS,group=interaction(TF)))+geom_line(aes(color=TF),size=0.5)+geom_point(size=2)+scale_color_manual(values = c("#F8766D", "#00BFC4"))+theme_bw() + theme(panel.grid = element_blank())+scale_y_continuous(limits = c(-2, 2)) + theme(legend.position="top")+ scale_x_discrete(labels= two_stages)
+    ggsave("Annelid_HOX.CDX.EVX_TFBS.pdf", width = 20, height = 15, units = "cm")
+
+
+## 4. Plot all 33 motifs archetypes
+
+    #Use the Hox/EVX/CDX as the example
+
+    library(motifcounter)
+    library(seqLogo)
+    library(ggplot2)
+    
+    pfm_665 <- read.table("Average_665.pfm",header=F) 
+    t_motif_665 = t(as.matrix(pfm_665))
+    # Reverse complement motif
+    revcompmotif_665 = motifcounter:::revcompMotif(t_motif_665)
+    p_revcompmotif_665 <- makePWM(revcompmotif_665)
+    pdf("logo_p_revcompmotif_665.pdf")
+    seqLogo(p_revcompmotif_665)
+    dev.off()
+

@@ -1,0 +1,300 @@
+# JSD species raw reads downloading,cleaning,mapping and transformation
+
+
+
+## 1.1 Download the data. (Use the *Strongylocentrotus purpuratus* ***as an example, for the rest of datasets and SRA information, please refer to the supplementary table***)
+| SRA                    | stage                                   |
+| ---------------------- | --------------------------------------- |
+| **SRR531843**          | young juvenile                          |
+| ## SRR531853,SRR531948 | embryo 24hpf                            |
+| SRR532151              | **four-arm stage**                      |
+| ## SRR532143           | **larva, pentagonal disc stage**        |
+| ## SRR532074           | ## embryo 30hpf                         |
+| ## SRR532055           | ## larva, vestibular invagination stage |
+| ## SRR531996           | ## embryo 64hpf                         |
+| ## SRR531964           | ## embryo 48hpf                         |
+| ## SRR531957           | ## post-metamorphosis                   |
+| ## SRR531956           | ## embryo 40hpf                         |
+| ## SRR531954           | ## embryo 56hpf                         |
+| ## SRR533746           | ## larva, tube-foot protrusion stage    |
+| ## SRR531950           | ## embryo 72hpf                         |
+| ## SRR531860           | ## embryo 18hpf                         |
+
+
+
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    
+    module load anaconda3
+    conda activate biotools
+    
+    prefetch SRR531843
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531843 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531843.sra
+    
+    prefetch SRR531853
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531853 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531853.sra
+    
+    prefetch SRR531948
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531948 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531948.sra
+    
+    prefetch SRR532151
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR532151 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR532151.sra
+    
+    prefetch SRR532143
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR532143 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR532143.sra
+    
+    prefetch SRR532074
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR532074 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR532074.sra
+    
+    prefetch SRR532055
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR532055 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR532055.sra
+    
+    prefetch SRR531996
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531996 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531996.sra
+    
+    prefetch SRR531964
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531964 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531964.sra
+    
+    prefetch SRR531957
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531957 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531957.sra
+    
+    prefetch SRR531956
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531956 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531956.sra
+    
+    prefetch SRR531954
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531954 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531954.sra
+    
+    prefetch SRR533746
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR533746 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR533746.sra
+    
+    prefetch SRR531950
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531950 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531950.sra
+    
+    prefetch SRR531860
+    cd ~/ncbi/public/sra
+    fastq-dump --outdir /data/scratch/btx541/00-ATAC/11-spur/fastq_SRR531860 --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR531860.sra
+
+
+## 2. Prepare fasta mapping file
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -pe smp 2
+    #$ -l h_vmem=30G
+    #$ -l h_rt=30:0:0
+    
+    module load anaconda3
+    conda activate biotools
+    
+    gffread -w Spur_filtered_longestIsoform.fa -g Strongylocentrotus_purpuratus.Spur_3.1.dna.toplevel.fa Spur_lociMerged_longestIsoform.gff
+
+
+## 3. Rename the fastq and trim the adaptors
+    mv SRR531860_pass_1.fastq.gz spur_1_r1.fastq.gz
+    mv SRR531860_pass_2.fastq.gz spur_1_r2.fastq.gz
+    mv SRR531948_pass_1.fastq.gz spur_2_r1.fastq.gz
+    mv SRR531948_pass_2.fastq.gz spur_2_r2.fastq.gz
+    mv SRR531853_pass_1.fastq.gz spur_3_r1.fastq.gz
+    mv SRR531853_pass_2.fastq.gz spur_3_r2.fastq.gz
+    mv SRR532074_pass_1.fastq.gz spur_4_r1.fastq.gz
+    mv SRR532074_pass_2.fastq.gz spur_4_r2.fastq.gz
+    mv SRR531956_pass_1.fastq.gz spur_5_r1.fastq.gz
+    mv SRR531956_pass_2.fastq.gz spur_5_r2.fastq.gz
+    mv SRR531964_pass_1.fastq.gz spur_6_r1.fastq.gz
+    mv SRR531964_pass_2.fastq.gz spur_6_r2.fastq.gz
+    mv SRR531954_pass_1.fastq.gz spur_7_r1.fastq.gz
+    mv SRR531954_pass_2.fastq.gz spur_7_r2.fastq.gz
+    mv SRR531996_pass_1.fastq.gz spur_8_r1.fastq.gz
+    mv SRR531996_pass_2.fastq.gz spur_8_r2.fastq.gz
+    mv SRR531950_pass_1.fastq.gz spur_9_r1.fastq.gz
+    mv SRR531950_pass_2.fastq.gz spur_9_r2.fastq.gz
+    mv SRR532151_pass_1.fastq.gz spur_10_r1.fastq.gz
+    mv SRR532151_pass_2.fastq.gz spur_10_r2.fastq.gz
+    mv SRR532055_pass_1.fastq.gz spur_11_r1.fastq.gz
+    mv SRR532055_pass_2.fastq.gz spur_11_r2.fastq.gz
+    mv SRR532143_pass_1.fastq.gz spur_12_r1.fastq.gz
+    mv SRR532143_pass_2.fastq.gz spur_12_r2.fastq.gz
+    mv SRR533746_pass_1.fastq.gz spur_13_r1.fastq.gz
+    mv SRR533746_pass_2.fastq.gz spur_13_r2.fastq.gz
+    mv SRR531957_pass_1.fastq.gz spur_14_r1.fastq.gz
+    mv SRR531957_pass_2.fastq.gz spur_14_r2.fastq.gz
+    mv SRR531843_pass_1.fastq.gz spur_15_r1.fastq.gz
+    mv SRR531843_pass_2.fastq.gz spur_15_r2.fastq.gz
+
+
+4. The sequencing was done at 2012, so they used Illumina Genome Analyzer IIx, the adaptors is TruSeq2-PE.fa. (For other species, double checke the single-end or pair-end, specify these adaptors, detailed information listed the supplementary table)
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -pe smp 2
+    #$ -l h_vmem=20G
+    #$ -l h_rt=20:0:0
+    #$ -t 1-15
+    
+    module load java/1.8.0_171-oracle
+    
+    java -jar /data/home/btx541/bin/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 2  -summary spur_${SGE_TASK_ID}_trim \
+    spur_${SGE_TASK_ID}_r1.fastq.gz \
+    spur_${SGE_TASK_ID}_r2.fastq.gz \
+    spur_${SGE_TASK_ID}_r1_paired.fastq.gz  \
+    spur_${SGE_TASK_ID}_r1_unpaired.fastq.gz \
+    spur_${SGE_TASK_ID}_r2_paired.fastq.gz  \
+    spur_${SGE_TASK_ID}_r2_unpaired.fastq.gz \
+    ILLUMINACLIP:/data/home/btx541/bin/Trimmomatic-0.39/adapters/TruSeq2-PE.fa:2:30:10 LEADING:28 TRAILING:28 SLIDINGWINDOW:4:15 MAXINFO:40:0.5 MINLEN:36
+
+
+## 4. map the reads to the longest isoform genome. (For other species, double checked the single-end, specify the read length and standard deviation, detailed information listed the supplementary table)
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=100:0:0
+    #$ -cwd
+    #$ -j y
+    
+    module load anaconda3
+    conda activate biotools
+    
+    
+    kallisto index -i filtered_spur_longestIsoform.idx Spur_filtered_longestIsoform.fa
+
+
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-15
+    
+    module load anaconda3
+    conda activate biotools
+    
+    
+    kallisto quant -i filtered_spur_longestIsoform.idx -o spur_${SGE_TASK_ID}_mapping spur_${SGE_TASK_ID}_r1_paired.fastq.gz spur_${SGE_TASK_ID}_r2_paired.fastq.gz
+
+
+## 5. Extract the TPM matrix for Spur 
+
+
+
+| pop | center | assay | sample           | experiment          | folder          |
+| --- | ------ | ----- | ---------------- | ------------------- | --------------- |
+| TSI | UNIGE  | R1    | 18 h             | hatched_Blastula    | spur_1_mapping  |
+| TSI | UNIGE  | R1    | 24 h             | mesenchyme_blastula | spur_2_mapping  |
+| TSI | UNIGE  | R2    | 24 h             | mesenchyme_blastula | spur_3_mapping  |
+| TSI | UNIGE  | R1    | 30 h             | early_gastrula      | spur_4_mapping  |
+| TSI | UNIGE  | R1    | 40 h             | mid_gastrula        | spur_5_mapping  |
+| TSI | UNIGE  | R1    | 48 h             | late_gastrula       | spur_6_mapping  |
+| TSI | UNIGE  | R1    | 56 h             | prism               | spur_7_mapping  |
+| TSI | UNIGE  | R1    | 64 h             | late_prisim         | spur_8_mapping  |
+| TSI | UNIGE  | R1    | 72 h             | pluteus             | spur_9_mapping  |
+| TSI | UNIGE  | R1    | four_arm_Stage   | four_arm_Stage      | spur_10_mapping |
+| TSI | UNIGE  | R1    | vestibular_stage | vestibular_stage    | spur_11_mapping |
+| TSI | UNIGE  | R1    | pentagonal_stage | pentagonal_stage    | spur_12_mapping |
+| TSI | UNIGE  | R1    | tube_foot_stage  | tube_foot_stage     | spur_13_mapping |
+| TSI | UNIGE  | R1    | post_meta_stage  | post_meta_stage     | spur_14_mapping |
+| TSI | UNIGE  | R1    | juvenie          | juvenie             | spur_15_mapping |
+
+
+
+    library(rhdf5)
+    library(ggplot2)
+    library(ggpubr)
+    library(gplots)
+    library(RColorBrewer)
+    library(tximport)
+    library(DESeq2)
+    library(rhdf5)
+    library(tidyr)
+    library(dplyr)
+    library(tibble)
+    
+    setwd("~/Strongylocentrotus_purpuratus")
+    dir <- getwd()
+    
+    spur_15 <- read.csv("spurs_kallisto_table.csv",header=T)
+    files_samples_spur_15 <- file.path(dir, spur_15$folder, "abundance.h5")
+    all(file.exists(files_samples_spur_15))
+    names(files_samples_spur_15) <- spur_15$experiment
+    tximport_kallisto_spur_15 <- tximport(files_samples_spur_15, type = "kallisto", txOut = TRUE)
+    head(tximport_kallisto_spur_15[["abundance"]])
+    spur_15_matrix <- as.data.frame(tximport_kallisto_spur_15[["abundance"]])
+    spur_15_matrix$mb_mean_TPM <- rowMeans(spur_15_matrix[,c(2,3)], na.rm = TRUE)
+    write.table(spur_15_matrix,"spur_TPM_matrix.txt",sep="\t",quote=F)
+
+
+## 6. Qunatile transformation of the raw TPM values
+    #quantile transformation of all 55 pairs (110 datasets) one-to-one orthologous
+    
+    ## loading package 
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt 
+    from matplotlib import pylab
+    import seaborn as sns 
+    from sklearn.metrics.pairwise import cosine_similarity
+    from statannot import add_stat_annotation
+    import matplotlib as mpl
+    from scipy import stats, cluster
+    import glob
+    import re
+    from sklearn.metrics import mean_squared_error, r2_score
+    from statsmodels.stats import multitest
+    
+    import warnings
+    warnings.simplefilter('ignore')
+    
+    ## load_large_dataFrame
+    def load_large_dataFrame(input_file, sep=",", header=0, index_col=0, chunksize=100000, compressed=False):
+        if compressed:
+            TextFileReader = pd.read_csv(input_file, chunksize=chunksize, sep=sep, header=header,index_col=index_col, compression='gzip')
+        else:
+            TextFileReader = pd.read_csv(input_file, chunksize=chunksize, sep=sep, header=header,index_col=index_col)
+        dfList=[]
+        for df in TextFileReader:
+            dfList.append(df)
+        final_df = pd.concat(dfList,sort=False)
+        return final_df
+    
+    import numpy as np
+    import os
+    import shutil
+    from sklearn.preprocessing import QuantileTransformer, quantile_transform
+    
+    if os.path.exists("all_raw_mean_qn"):
+        pass
+    else:
+        os.makedirs("all_raw_mean_qn")
+    
+    
+    files = glob.glob("all_raw_mean/*.txt")
+    for file in files:
+        print (file)
+        s = file.split("/")[1]
+        print (s)
+        tpm_df = load_large_dataFrame(file, sep="\t")
+        qt_tpm = quantile_transform(tpm_df, n_quantiles=10, random_state=0, axis=0, copy=True)
+        qt_tpm_df = pd.DataFrame(qt_tpm, index=tpm_df.index, columns=tpm_df.columns)
+        qt_tpm_df.to_csv("all_raw_mean_qn/"+s.strip("txt")+"quantile_transform.csv") 
+

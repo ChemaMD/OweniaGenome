@@ -1,0 +1,98 @@
+# Transcription factors foot printing 
+We applied TOBIAS to analyse the transcriptional factors foot printing.
+
+
+## 1. ATACorrect the Tn5 insertion and footprinting
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 4
+    #$ -l h_vmem=50G
+    #$ -l h_rt=12:0:0
+    #$ -t 1-10
+    
+    module load anaconda3
+    conda activate biotools
+    
+    TOBIAS ATACorrect --bam /data/scratch/btx541/00-ATAC/20-Ofus-ANANSE/Ofus_shift_ChroSorted_${SGE_TASK_ID}.bam --genome /data/scratch/btx541/00-ATAC/03-Owenia_genome/Owenia_unmasked_v082020.fa --peaks /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ofus_consensus_peaks.bed --outdir Ofus_ATACorrect_all_${SGE_TASK_ID} &&
+    TOBIAS FootprintScores --signal Ofus_ATACorrect_all_${SGE_TASK_ID}/Ofus_shift_ChroSorted_${SGE_TASK_ID}_corrected.bw --regions /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ofus_consensus_peaks.bed --output Ofus_shift_correct_footprints_${SGE_TASK_ID}.bw --cores 4 &&
+
+
+## 2. Merge two replicates of each stage
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 4
+    #$ -l h_vmem=50G
+    #$ -l h_rt=12:0:0
+    
+    bigWigMerge  Ofus_shift_correct_footprints_1.bw  Ofus_shift_correct_footprints_2.bw Ofus_merged_1_footprints.bedGraph &&
+    sort -k1,1 -k2,2n Ofus_merged_1_footprints.bedGraph > sort_Ofus_merged_1_footprints.bedGraph &&
+    bedGraphToBigWig sort_Ofus_merged_1_footprints.bedGraph /data/scratch/btx541/00-ATAC/03-Owenia_genome/Ofus_genome.size sort_Ofus_merged_1_footprints.bw
+    
+    bigWigMerge  Ofus_shift_correct_footprints_3.bw  Ofus_shift_correct_footprints_4.bw Ofus_merged_2_footprints.bedGraph &&
+    sort -k1,1 -k2,2n Ofus_merged_2_footprints.bedGraph > sort_Ofus_merged_2_footprints.bedGraph &&
+    bedGraphToBigWig sort_Ofus_merged_2_footprints.bedGraph /data/scratch/btx541/00-ATAC/03-Owenia_genome/Ofus_genome.size sort_Ofus_merged_2_footprints.bw
+    
+    bigWigMerge Ofus_shift_correct_footprints_5.bw  Ofus_shift_correct_footprints_6.bw Ofus_merged_3_footprints.bedGraph &&
+    sort -k1,1 -k2,2n Ofus_merged_3_footprints.bedGraph > sort_Ofus_merged_3_footprints.bedGraph &&
+    bedGraphToBigWig sort_Ofus_merged_3_footprints.bedGraph /data/scratch/btx541/00-ATAC/03-Owenia_genome/Ofus_genome.size sort_Ofus_merged_3_footprints.bw
+    
+    bigWigMerge Ofus_shift_correct_footprints_7.bw  Ofus_shift_correct_footprints_8.bw Ofus_merged_4_footprints.bedGraph &&
+    sort -k1,1 -k2,2n Ofus_merged_4_footprints.bedGraph > sort_Ofus_merged_4_footprints.bedGraph &&
+    bedGraphToBigWig sort_Ofus_merged_4_footprints.bedGraph /data/scratch/btx541/00-ATAC/03-Owenia_genome/Ofus_genome.size sort_Ofus_merged_4_footprints.bw
+    
+    bigWigMerge Ofus_shift_correct_footprints_9.bw  Ofus_shift_correct_footprints_10.bw Ofus_merged_5_footprints.bedGraph &&
+    sort -k1,1 -k2,2n Ofus_merged_5_footprints.bedGraph > sort_Ofus_merged_5_footprints.bedGraph &&
+    bedGraphToBigWig sort_Ofus_merged_5_footprints.bedGraph /data/scratch/btx541/00-ATAC/03-Owenia_genome/Ofus_genome.size sort_Ofus_merged_5_footprints.bw
+
+
+## 3. Detect the footprint of 5 stages throughout development in Ofus and Ctel 
+
+
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 4
+    #$ -l h_vmem=50G
+    #$ -l h_rt=3:0:0
+    
+    module load anaconda3
+    conda activate biotools
+    
+    
+    
+    #(in time-series manner, merge replicates in each stage, in a time series manner, remove one bias sequence, so finally we have 95 motif in Ofus, 91 in Ctel)
+    TOBIAS BINDetect \
+    --motifs /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/02-Tobias/motifs_format/final_meme_Ofus_motif_95.meme  \
+    --signals sort_Ofus_merged_5_footprints.bw sort_Ofus_merged_4_footprints.bw sort_Ofus_merged_3_footprints.bw sort_Ofus_merged_2_footprints.bw sort_Ofus_merged_1_footprints.bw \
+    --cond-names Ofus_CL Ofus_ML Ofus_EG Ofus_GL Ofus_BL \
+    --genome /data/home/btx541/btx541/00-ATAC/03-Owenia_genome/Owenia_unmasked_v082020.fa \
+    --peaks /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ofus_consensus_peaks.bed \
+    --outdir Ofus_95_motifs_all_5_stages_label_time_series --naming id --time-series 
+
+
+    #!/bin/bash
+    #$ -cwd
+    #$ -j y
+    #$ -l highmem
+    #$ -pe smp 4
+    #$ -l h_vmem=50G
+    #$ -l h_rt=2:0:0
+    
+    
+    module load anaconda3
+    conda activate biotools
+    
+    
+    
+    #(in time-series manner, merge replicates in each stage, in a time series manner)
+    TOBIAS BINDetect --motifs /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/02-Tobias/motifs_format/final_meme_Ctel_motif_91.meme \
+    --signals sort_Ctel_merged_1_footprints.bw sort_Ctel_merged_2_footprints.bw sort_Ctel_merged_3_footprints.bw sort_Ctel_merged_4_footprints.bw sort_Ctel_merged_5_footprints.bw \
+    --genome /data/scratch/btx541/00-ATAC/02-Ctel_info/Capitella_teleta.Capitella_teleta_v1.0.dna.toplevel.fa \
+    --peaks /data/scratch/btx541/00-ATAC/22-Comparison_Ofus_Ctel/03-Gimme/00-DATASET/Ctel_consensus_peaks.bed \
+    --outdir Ctel_91_motifs_all_5_stages_time_series --naming id --time-series 
+

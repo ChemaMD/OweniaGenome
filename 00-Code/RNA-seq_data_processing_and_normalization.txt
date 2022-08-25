@@ -1,0 +1,218 @@
+# RNA-seq data downloading, cleaning, mapping and DESeq2 normalization
+
+# 1. Owenia fusiformis RNA-seq data
+## 1.1 cut adaptors (trimmomatic)
+    #trim the adaptors from the raw datasets of O.fusiformis
+    
+    #!/bin/bash
+    #$ -pe smp 1
+    #$ -l h_vmem=20G
+    #$ -l h_rt=100:0:0
+    #$ -cwd
+    #$ -j y
+    
+    module load java/1.8.0_171-oracle
+    
+    java -jar trimmomatic-0.39.jar PE -threads 2 -trimlog trim_JV.log -summary Jv_trim \
+    WTCHG_819955_70915067_1.fastq.gz \
+    WTCHG_819955_70915067_2.fastq.gz \
+    trim_JV_1_paired.fastq.gz  \
+    trim_JV_1_unpaired.fastq.gz \
+    trim_JV_2_paired.fastq.gz  \
+    trim_JV_2_unpaired.fastq.gz \
+    ILLUMINACLIP:/Trimmomatic-0.39/adapters/TruSeq3-PE.fa:2:30:10 LEADING:28 TRAILING:28 SLIDINGWINDOW:4:15 MAXINFO:40:0.5 MINLEN:36
+    
+    
+
+
+## 1.2 Kallisto mapping
+
+
+    #build the index based on the reference transcriptome
+    kallisto index -i Owenia_annotation_v250920_filtered_mRNA.idx Owenia_annotation_v250920_filtered_mRNA.fasta 
+    
+    #quantify the reads via pseudo_mapping
+    kallisto quant -i Owenia_annotation_v250920_filtered_mRNA.idx -o new_owe_${SGE_TASK_ID}_mapping trim_JV_1_paired.fastq.gz trim_JV_2_paired.fastq.gz
+
+
+## 1.3. DESeq2 normalization and pairwise comparison
+
+
+    library(EnhancedVolcano)
+    library(tximport)
+    library(DESeq2)
+    library(rhdf5)
+    
+    dir <- getwd()
+    samples_27 <- read.table(file.path(dir, "27_samples.txt"), header = TRUE)
+    files_27 <- file.path(dir, samples_27$run, "abundance.h5")
+    all(file.exists(files_27))
+    names(files_27) <- samples_27$experiment
+    tximport_kallisto_27 <- tximport(files_27, type = "kallisto", txOut = TRUE)
+    head(tximport_kallisto_27$counts)
+    sampleTable_27_1 <- data.frame(stage = factor(c("Oc","Oc","1C","1C","2C","2C","4C","4C","8C","8C","16C","16C","32C","32C","BL","BL","GL","GL","EG","EG","EL","EL","ML","ML","CL","CL","JV")),replicate = factor(c("1","2","1","2","1","2","1","2","1","2","1","2","1","2","1","2","1","2","1","2","1","2","1","2","1","2","1")))
+    dds_27_1 <- DESeqDataSetFromTximport(tximport_kallisto_27, sampleTable_27_1, ~stage+replicate)
+    rownames(sampleTable_27_1) <- colnames(tximport_kallisto_27$counts)
+    
+    #DESeq2 normalized the Kallisto imported files
+    dds_DEseq2_27_1 <- DESeq(dds_27_1)
+    
+    # pairwise comparison between adjacent stages, (use gastrula verse blastula as an example)
+    
+    s_results_8_27 <- lfcShrink(dds_DEseq2_27_1,contrast = c("stage","GL","BL"))
+    
+    #subset the siginificantly differential expressed genesets based on their log fold change
+    s_diff_8_27_up_A <- subset(s_results_8_27,padj < 0.05 &(log2FoldChange > 5))
+    s_diff_8_27_up_B <- subset(s_results_8_27,padj < 0.05 &(log2FoldChange > 3 & log2FoldChange < 5))
+    s_diff_8_27_up_C <- subset(s_results_8_27,padj < 0.05 &(log2FoldChange > 1 & log2FoldChange < 3))
+    s_diff_8_27_down_A <- subset(s_results_8_27,padj < 0.05 &(log2FoldChange < -5))
+    s_diff_8_27_down_B <- subset(s_results_8_27,padj < 0.05 &(log2FoldChange > -5 & log2FoldChange < -3))
+    s_diff_8_27_down_C <- subset(s_results_8_27,padj < 0.05 &(log2FoldChange > -3 & log2FoldChange < -1))
+
+
+
+# 2. Capitela teleta RNA-seq datasets (original and SRA datasets)
+
+
+## 2.1 trim adaptors (fastp)
+    #trim the adaptors for the C.teleta RNA-seq datasets (original datasets in this paper)
+    #!/bin/bash
+    #$ -pe smp 5
+    #$ -l highmem
+    #$ -l h_vmem=4G
+    #$ -l h_rt=4:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load anaconda3
+    conda activate fastp
+    
+    fastp -w 5 --detect_adapter_for_pe -i rep1_${SGE_TASK_ID}_R1.fastq.gz -I rep1_${SGE_TASK_ID}_R2.fastq.gz -o rep1_${SGE_TASK_ID}_R1_clean.fastq.gz -O rep1_${SGE_TASK_ID}_R2_clean.fastq.gz
+    fastp -w 5 --detect_adapter_for_pe -i rep2_${SGE_TASK_ID}_R1.fastq.gz -I rep2_${SGE_TASK_ID}_R2.fastq.gz -o rep2_${SGE_TASK_ID}_R1_clean.fastq.gz -O rep2_${SGE_TASK_ID}_R2_clean.fastq.gz
+    
+
+
+    #!/bin/bash
+    #$ -pe smp 1
+    #$ -l h_vmem=30G
+    #$ -l h_rt=10:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load anaconda3
+    conda activate biotools
+    
+    
+    kallisto quant -i Ctel_v050321_mRNA_1.idx -o Ctel_hox_rep1_${SGE_TASK_ID}_mapping /data/SBCS-MartinDuranLab/02-Chema/Capitella_transcriptome/01-FASTP/00-CleanFastQ/rep1_${SGE_TASK_ID}_R1_clean.fastq.gz /data/SBCS-MartinDuranLab/02-Chema/Capitella_transcriptome/01-FASTP/00-CleanFastQ/rep1_${SGE_TASK_ID}_R2_clean.fastq.gz 
+    kallisto quant -i Ctel_v050321_mRNA_1.idx -o Ctel_hox_rep2_${SGE_TASK_ID}_mapping /data/SBCS-MartinDuranLab/02-Chema/Capitella_transcriptome/01-FASTP/00-CleanFastQ/rep2_${SGE_TASK_ID}_R1_clean.fastq.gz /data/SBCS-MartinDuranLab/02-Chema/Capitella_transcriptome/01-FASTP/00-CleanFastQ/rep2_${SGE_TASK_ID}_R2_clean.fastq.gz 
+
+
+
+## 2.2 Add more time-points, pre-CL and CL of Capitella, the info are following
+| replicate | stage         | sample          | SRA        |
+| --------- | ------------- | --------------- | ---------- |
+| R1        | Pre_competent | Pre_competent_1 | SRR5357808 |
+| R2        | Pre_competent | Pre_competent_2 | SRR5357807 |
+| R3        | Pre_competent | Pre_competent_3 | SRR5357806 |
+| R4        | Pre_competent | Pre_competent_4 | SRR5357805 |
+| R1        | Competent     | Competent_1     | SRR5357812 |
+| R2        | Competent     | Competent_2     | SRR5357811 |
+| R3        | Competent     | Competent_3     | SRR5357810 |
+| R4        | Competent     | Competent_4     | SRR5357809 |
+
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 5-9
+    
+    module load anaconda3
+    conda activate biotools
+    
+    prefetch SRR535780${SGE_TASK_ID}
+    cd /data/home/btx541/btx541/00-ATAC/sra/sra
+    fastq-dump --outdir /data/home/btx541/btx541/00-ATAC/09-Capitella_RNA_Seq/extract_data/jsd/fastq_SRR535780${SGE_TASK_ID} --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR535780${SGE_TASK_ID}.sra
+
+
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 10-12
+    
+    module load anaconda3
+    conda activate biotools
+    
+    prefetch SRR53578${SGE_TASK_ID}
+    cd /data/home/btx541/btx541/00-ATAC/sra/sra
+    fastq-dump --outdir /data/home/btx541/btx541/00-ATAC/09-Capitella_RNA_Seq/extract_data/jsd/fastq_SRR53578${SGE_TASK_ID} --gzip --skip-technical  --readids --read-filter pass --dumpbase --split-3 --clip SRR53578${SGE_TASK_ID}.sra
+
+
+## 2.3 trim the adaptors (single end, trimmomatic)
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 5-9
+    
+    module load java/1.8.0_171-oracle
+    
+    java -jar /data/home/btx541/bin/Trimmomatic-0.39/trimmomatic-0.39.jar SE -threads 2 -trimlog Ctel_${SGE_TASK_ID}.log -summary Ctel_${SGE_TASK_ID}_trim \
+    /data/scratch/btx541/00-ATAC/09-Capitella_RNA_Seq/extract_data/jsd/fastq_SRR535780${SGE_TASK_ID}/SRR535780${SGE_TASK_ID}_pass.fastq.gz \
+    fastq_SRR535780${SGE_TASK_ID}_output.fastq.gz \
+    ILLUMINACLIP:/data/home/btx541/bin/Trimmomatic-0.39/adapters/TruSeq3-SE.fa:2:30:10 LEADING:28 TRAILING:28 SLIDINGWINDOW:4:15 MAXINFO:40:0.5 MINLEN:36 &&
+    
+    kallisto quant --single -l 50 -s 10 -i Capitella_mRNA_index.idx -o SRR535780${SGE_TASK_ID}_mapping fastq_SRR535780${SGE_TASK_ID}_output.fastq.gz
+    
+
+
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 10-12
+    
+    module load java/1.8.0_171-oracle
+    
+    java -jar /data/home/btx541/bin/Trimmomatic-0.39/trimmomatic-0.39.jar SE -threads 2 -trimlog Ctel_${SGE_TASK_ID}.log -summary Ctel_${SGE_TASK_ID}_trim \
+    /data/scratch/btx541/00-ATAC/09-Capitella_RNA_Seq/extract_data/jsd/fastq_SRR53578${SGE_TASK_ID}/SRR53578${SGE_TASK_ID}_pass.fastq.gz \
+    fastq_SRR53578${SGE_TASK_ID}_output.fastq.gz \
+    ILLUMINACLIP:/data/home/btx541/bin/Trimmomatic-0.39/adapters/TruSeq3-SE.fa:2:30:10 LEADING:28 TRAILING:28 SLIDINGWINDOW:4:15 MAXINFO:40:0.5 MINLEN:36 &&
+    kallisto quant --single -l 50 -s 10 -i Capitella_mRNA_index.idx -o SRR53578${SGE_TASK_ID}_mapping fastq_SRR53578${SGE_TASK_ID}_output.fastq.gz
+
+
+
+
+## 2.4 Generated DESeq2 table for Capitella from oocytes to the CL
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/01-Data/07-RNAseq/13_Ctel/hox")
+    dir <- getwd()
+    
+    Ctel_hox <- read.csv("Ctel_hox_table.csv",header=T)
+    files_Ctel_hox <- file.path(dir, Ctel_hox$run, "abundance.h5")
+    all(file.exists(files_Ctel_hox))
+    names(files_Ctel_hox) <- Ctel_hox$sample
+    tximport_kallisto_Ctel_hox <- tximport(files_Ctel_hox, type = "kallisto", txOut = TRUE)
+    
+    sampleTable <- data.frame(stage = factor(rep(c("Oc","1C","2C","4C","8C","16C","32C","64C","GL","St4tt","St5","St7","Pre_CL","Pre_CL","CL","CL"),each=2)),replicate = factor(c("rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-1","rep-2","rep-3","rep-4","rep-1","rep-2","rep-3","rep-4")))
+    rownames(sampleTable) <- colnames(tximport_kallisto_Ctel_hox$counts)
+    dds <- DESeqDataSetFromTximport(tximport_kallisto_Ctel_hox, sampleTable, ~stage+replicate)
+    
+    dds_DEseq2 <- DESeq(dds)
+    table_counts_normalized <- counts(dds_DEseq2, normalized=TRUE)
+    write.table(table_counts_normalized,"Ctel_all_hox_matrix_RNA_Seq_DESeq2.txt",sep="\t",quote = F)
+
+

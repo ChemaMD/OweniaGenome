@@ -1,0 +1,170 @@
+# ATAC-seq data cleaning, processing, and library quality control
+
+
+## 1. Trim the adaptors for the library 
+
+(Use the Capitella teleta stage 5 and stage 8 larva as examples) 
+
+rename the file, incorporating them to the capitella blastula, gastrula, elongation
+
+    
+    mv st5_2_EKDL220004425-1a-AK1972_HKNV2DSX3_L2_1.fq.gz Cap_8_r1_150.fq.gz
+    mv st5_2_EKDL220004425-1a-AK1972_HKNV2DSX3_L2_2.fq.gz Cap_8_r2_150.fq.gz
+    mv st5_3_EKDL220004425-1a-AK1553_HKNV2DSX3_L2_1.fq.gz Cap_9_r1_150.fq.gz
+    mv st5_3_EKDL220004425-1a-AK1553_HKNV2DSX3_L2_2.fq.gz Cap_9_r2_150.fq.gz
+    mv st8_1_EKDL220004425-1a-AK1554_HKNV2DSX3_L2_1.fq.gz Cap_10_r1_150.fq.gz
+    mv st8_1_EKDL220004425-1a-AK1554_HKNV2DSX3_L2_2.fq.gz Cap_10_r2_150.fq.gz
+    mv st8_2_EKDL220004425-1a-AK1566_HKNV2DSX3_L2_1.fq.gz Cap_11_r1_150.fq.gz
+    mv st8_2_EKDL220004425-1a-AK1566_HKNV2DSX3_L2_2.fq.gz Cap_11_r2_150.fq.gz
+    
+| sample | file name                                                                                                | index                                                         |
+| ------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| st5_2  | st5_2_EKDL220004425-1a-AK1972_HKNV2DSX3_L2_1.fq.gz<br>st5_2_EKDL220004425-1a-AK1972_HKNV2DSX3_L2_2.fq.gz | 2.15<br>CAAGCAGAAGACGGCATACGAGATCAGATCCAGTCTCGTGGGCTCGGAGATGT |
+| st5_3  | st5_3_EKDL220004425-1a-AK1553_HKNV2DSX3_L2_1.fq.gz<br>st5_3_EKDL220004425-1a-AK1553_HKNV2DSX3_L2_2.fq.gz | 2.16<br>CAAGCAGAAGACGGCATACGAGATACAAACGGGTCTCGTGGGCTCGGAGATGT |
+| st8_1  | st8_1_EKDL220004425-1a-AK1554_HKNV2DSX3_L2_1.fq.gz<br>st8_1_EKDL220004425-1a-AK1554_HKNV2DSX3_L2_2.fq.gz | 2.17<br>CAAGCAGAAGACGGCATACGAGATACCCAGCAGTCTCGTGGGCTCGGAGATGT |
+| st8_2  | st8_2_EKDL220004425-1a-AK1566_HKNV2DSX3_L2_1.fq.gz<br>st8_2_EKDL220004425-1a-AK1566_HKNV2DSX3_L2_2.fq.gz | 2.18<br>CAAGCAGAAGACGGCATACGAGATAACCCCTCGTCTCGTGGGCTCGGAGATGT |
+
+
+
+
+    #!/bin/bash
+    #$ -pe smp 1
+    #$ -l h_vmem=10G
+    #$ -l h_rt=30:0:0
+    #$ -cwd
+    #$ -j y
+    
+    module load anaconda3
+    conda activate biotools
+    
+    
+    cutadapt -a AATGATACGGCGACCACCGAGATCTACACTCGTCGGCAGCGTCAGATGTG -A CAAGCAGAAGACGGCATACGAGATCAGATCCAGTCTCGTGGGCTCGGAGATGT -o Cap_8_r1_trim.fq.gz -p Cap_8_r2_trim.fq.gz Cap_8_r1_150.fq.gz Cap_8_r2_150.fq.gz
+    cutadapt -a AATGATACGGCGACCACCGAGATCTACACTCGTCGGCAGCGTCAGATGTG -A CAAGCAGAAGACGGCATACGAGATACAAACGGGTCTCGTGGGCTCGGAGATGT -o Cap_9_r1_trim.fq.gz -p Cap_9_r2_trim.fq.gz Cap_9_r1_150.fq.gz Cap_9_r2_150.fq.gz
+    cutadapt -a AATGATACGGCGACCACCGAGATCTACACTCGTCGGCAGCGTCAGATGTG -A CAAGCAGAAGACGGCATACGAGATACCCAGCAGTCTCGTGGGCTCGGAGATGT -o Cap_10_r1_trim.fq.gz -p Cap_10_r2_trim.fq.gz Cap_10_r1_150.fq.gz Cap_10_r2_150.fq.gz
+    cutadapt -a AATGATACGGCGACCACCGAGATCTACACTCGTCGGCAGCGTCAGATGTG -A CAAGCAGAAGACGGCATACGAGATAACCCCTCGTCTCGTGGGCTCGGAGATGT -o Cap_11_r1_trim.fq.gz -p Cap_11_r2_trim.fq.gz Cap_11_r1_150.fq.gz Cap_11_r2_150.fq.gz
+    
+    
+
+trim the 150bp to 75bp
+
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l h_vmem=20G
+    #$ -l h_rt=50:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 7-12
+    
+    module load anaconda3
+    conda activate biotools
+    
+    cutadapt -l 75 Cap_${SGE_TASK_ID}_r1_trim.fq.gz > Cap_${SGE_TASK_ID}_r1_trim_75.fq.gz
+    cutadapt -l 75 Cap_${SGE_TASK_ID}_r2_trim.fq.gz > Cap_${SGE_TASK_ID}_r2_trim_75.fq.gz
+
+mv the fq.gz to .fastq.gz
+
+    
+    cp Cap_8_r1_trim_75.fq.gz Cap_8_r1.fastq.gz
+    cp Cap_8_r1_trim_75.fq.gz Cap_8_r2.fastq.gz
+    cp Cap_9_r1_trim_75.fq.gz Cap_9_r1.fastq.gz
+    cp Cap_9_r1_trim_75.fq.gz Cap_9_r2.fastq.gz
+    cp Cap_10_r1_trim_75.fq.gz Cap_10_r1.fastq.gz
+    cp Cap_10_r1_trim_75.fq.gz Cap_10_r2.fastq.gz
+    cp Cap_11_r1_trim_75.fq.gz Cap_11_r1.fastq.gz
+    cp Cap_11_r1_trim_75.fq.gz Cap_11_r2.fastq.gz
+    
+
+
+
+## 2. NextGenMap to the genome
+    #!/bin/bash
+    #$ -pe smp 1
+    #$ -l h_vmem=10G
+    #$ -l h_rt=50:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load  anaconda3
+    conda activate biotools
+    
+    ngm --paired --bam -r Capitella_teleta.Capitella_teleta_v1.0.dna.toplevel.fa -1 Cap_${SGE_TASK_ID}_r1.fastq.gz -2 Cap_${SGE_TASK_ID}_r2.fastq.gz -o Ctel_new_ngm_${SGE_TASK_ID}.bam
+
+
+## 3. Remove duplicated reads
+    #!/bin/bash
+    #$ -pe smp 1
+    #$ -l h_vmem=10G
+    #$ -l h_rt=50:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load samtools
+    
+    samtools view -b -F 0x400 -f 0x2 Ctel_new_ngm_${SGE_TASK_ID}.bam > Ctel_new_ngm_clean_${SGE_TASK_ID}.bam &&
+    
+    samtools sort -@ 1 -o Ctel_new_ngm_clean_Chrsorted_${SGE_TASK_ID}.bam Ctel_new_ngm_clean_${SGE_TASK_ID}.bam
+    samtools sort -n -@ 1 -o Ctel_new_ngm_clean_Namesorted_${SGE_TASK_ID}.bam Ctel_new_ngm_clean_${SGE_TASK_ID}.bam &&
+    
+    samtools index -@ 1 Ctel_new_ngm_clean_Chrsorted_${SGE_TASK_ID}.bam
+
+
+## 4. library QC PBC scores 
+    #!/bin/bash
+    #$ -pe smp 1
+    #$ -l h_vmem=10G
+    #$ -l h_rt=10:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load bedtools
+    module load samtools
+    
+    bedtools bamtobed -bedpe -i Ctel_new_ngm_clean_Namesorted_${SGE_TASK_ID}.bam | awk 'BEGIN{OFS="\t"}{print $1,$2,$4,$6,$9,$10}' | sort | uniq -c | awk 'BEGIN{mt=0;m0=0;m1=0;m2=0}($1==1){m1=m1+1} ($1==2){m2=m2+1} {m0=m0+1} {mt=mt+$1} END{printf "%d\t%d\t%d\t%d\t%f\t%f\t%f\n", mt,m0,m1,m2,m0/mt,m1/m0,m1/m2}' > Ctel_new_ngm_clean_Namesorted_${SGE_TASK_ID}_ngm.pbc.qc
+    
+    samtools view Ctel_new_ngm_clean_Namesorted_${SGE_TASK_ID}.bam | awk '$9>0' | cut -f 9 | sort | uniq -c | sort -b -k2,2n | sed -e 's/^[ \t]*//' > Ctel_new_ngm_clean_Namesorted_fragment_length_distribution_${SGE_TASK_ID}.txt
+
+
+##  5. Insert size distribution
+
+
+      #(Use 64cell/blastula of Capitella as an example)
+    setwd("/Users/yanliang/Dropbox/02-OweniaGenome/06-Revision/00-DATA/13-Capitella_teleta_ATACseq_analyses/01-QC/01-libraries_QC")
+    Ctel_64C_1 <- read.table("Ctel_new_ngm_clean_Namesorted_fragment_length_distribution_1.txt", header=T)
+    Ctel_64C_1$log_10 <- log(Ctel_64C_1$Counts,10)
+    
+    
+    ggplot(data = Ctel_64C_1) + geom_line(aes(x=Size, y=log_10),colour = rgb(86, 59, 69, maxColorValue = 255),size=1)+theme_bw() + theme(panel.grid = element_blank())+scale_x_continuous(breaks = c(0,200,400,600,800,1000)) +
+      scale_y_continuous(breaks = c(2:8),limits = c(2,8))+theme(plot.title = element_text(color="black",size=12,hjust=0.5),
+            axis.title.x = element_text(color="black",size=12),
+            axis.title.y = element_text(color="black",size=12),
+            axis.text.x = element_text(color="black",size=12,
+                                       hjust=0.95,vjust=0.2,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.text.y = element_text(color="black",size=12,
+                                       margin=margin(0.3,0.3,0.3,0.3,"cm")),
+            axis.line = element_line(colour="black", size=1, linetype = "solid"),
+            axis.title.x.top = element_blank(),
+            axis.title.y.right = element_blank(),
+            axis.ticks.length = unit(-0.15, "cm"),axis.ticks=element_line(size=1))
+    ggsave("Ctel_64C_1_inserted_size_distribution_c.pdf", width = 20, height = 20, units = "cm")
+
+
+
+## 6. Shift the reads
+    #!/bin/bash
+    #$ -pe smp 2
+    #$ -l highmem
+    #$ -l h_vmem=30G
+    #$ -l h_rt=120:0:0
+    #$ -cwd
+    #$ -j y
+    #$ -t 1-12
+    
+    module load samtools
+    
+    
+    alignmentSieve --numberOfProcessors 2 --ATACshift --bam Ctel_new_ngm_clean_Chrsorted_${SGE_TASK_ID}.bam -o Ctel_shift_new_ngm_clean_Chrsorted_${SGE_TASK_ID}.bam
+
