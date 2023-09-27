@@ -8,8 +8,8 @@ All files and code are made publicly available and can be used for further resea
 > *Nature* **615**, 105–110 (2023). https://doi.org/10.1038/s41586-022-05636-7
 
 ## Author contact
-- [José M. Martín-Durán](mailto:chema.martin@qmul.ac.uk) (senior co-author)
-- [Ferdinand Marlétaz](mailto:f.marletaz@ucl.ac.uk) (senior co-author)
+- [José M. Martín-Durán](mailto:chema.martin@qmul.ac.uk) (senior co-author, corresponding author)
+- [Ferdinand Marlétaz](mailto:f.marletaz@ucl.ac.uk) (senior co-author, corresponding author)
 - [Francisco M. Martín-Zamora](mailto:f.m.martinzamora@qmul.ac.uk) (co-first author)
 - [Yan Liang](mailto:y.liang@qmul.ac.uk) (co-first author)
 - Lab website: [martinduranlab.com](https://www.martinduranlab.com)
